@@ -19,17 +19,8 @@ namespace json {
 	namespace util {
 		std::string_view strip(std::string_view v);
 		std::vector<std::string_view> split(std::string_view v, const std::string& delim);
+		std::vector<std::string_view> smartSplit(std::string_view v, char delim);
 		std::optional<size_t> getIdx(std::string_view v);
-	}
-
-	namespace check {
-		bool isObj(std::string_view v);
-		bool isArr(std::string_view v);
-		bool isInt(std::string_view v);
-		bool isFloat(std::string_view v);
-		bool isStr(std::string_view v);
-		bool isBool(std::string_view v);
-		bool isNull(std::string_view v);
 	}
 
 	template<typename T, typename Args>
@@ -51,24 +42,43 @@ namespace json {
 			Int,
 			Float,
 			String,
+			Bool,
+			Null,
 			Array,
-			Object
+			Object,
+			NoType
 		};
 		Node(Type type);
 		virtual ~Node();
 		Type type;
 	};
 
+	namespace check {
+		//bool isObj(std::string_view v);
+		//bool isArr(std::string_view v);
+		//bool isInt(std::string_view v);
+		//bool isFloat(std::string_view v);
+		bool isStr(std::string_view v);
+		//bool isBool(std::string_view v);
+		//bool isNull(std::string_view v);
+		bool isNumberStart(char ch);
+		Node::Type getType(std::string_view v);
+	}
+
 	class ValNode : public Node {
 	public:
 		using Val = std::variant<
 			int64_t,
 			double,
-			std::string
+			std::string,
+			bool,
+			Null
 		>;
 		ValNode(int64_t v);
 		ValNode(double d);
 		ValNode(const std::string& s);
+		ValNode(bool b);
+		ValNode();
 		template<typename T>
 			requires IsOneOfVariants<T, Val>::value
 		inline T as() {
@@ -80,12 +90,14 @@ namespace json {
 
 	class ArrNode : public Node {
 	public:
+		ArrNode();
 		ArrNode(std::vector<Node*>&& v);
 		~ArrNode();
 		const auto& get();
 		Node* get(size_t idx);
 		template<typename T>
 		std::vector<T> as();
+		void add(Node* node);
 	private:
 		bool isMonotype() const;
 		std::vector<Node*> val;
@@ -93,22 +105,26 @@ namespace json {
 
 	class ObjNode : public Node {
 	public:
+		ObjNode();
 		ObjNode(std::unordered_map<std::string, Node*>&& m);
 		~ObjNode();
 		const auto& get();
 		Node* get(const std::string& key);
+		void add(const std::string& key, Node* val);
 	private:
 		std::unordered_map<std::string, Node*> val;
 	};
 
 	class Json {
 	public:
+		Json();
 		Json(Node* r);
 		~Json();
 		template<typename T>
 		T as(const std::string& key);
 		template<typename T, StringVector Cont>
 		T as(const Cont& keys);
+		bool empty() const;
 	private:
 		Node* get(const std::string& key);
 		template<StringVector Cont>
@@ -202,19 +218,19 @@ namespace json {
 		return T();
 	}
 
-	/*class JsonDecoder {
+	class JsonDecoder {
 	public:
-		using ResT = std::unordered_map<std::string, std::any>;
 		JsonDecoder();
-		ResT decode(std::string_view v);
+		Json decode(std::string_view v);
 	private:
-		ResT decodeObj(std::string_view v);
-		ResT decodeArr(std::string_view v);
-		ResT decodeInt(std::string_view v);
-		ResT decodeFloat(std::string_view v);
-		ResT decodeStr(std::string_view v);
-		ResT decodeBool(std::string_view v);
-		ResT decodeNull(std::string_view v);
-	};*/
+		Node* decodeImpl(std::string_view v);
+		Node* decodeObj(std::string_view v);
+		Node* decodeArr(std::string_view v);
+		Node* decodeInt(std::string_view v);
+		Node* decodeFloat(std::string_view v);
+		Node* decodeStr(std::string_view v);
+		Node* decodeBool(std::string_view v);
+		Node* decodeNull(std::string_view v);
+	};
 
 }

@@ -28,6 +28,9 @@ int main()
 			})
 		} });
 
+	Node* b = new ValNode((bool)true);
+	Node* n = new ValNode();
+
 	/*
 		{
 			"1": 10,
@@ -45,7 +48,9 @@ int main()
 		{"1", i},
 		{"2", s},
 		{"3", arr},
-		{"4", obj}
+		{"4", obj},
+		{"5", b},
+		{"6", n}
 		});
 
 	Json json(root);
@@ -61,5 +66,22 @@ int main()
 	cout << "-------\n";
 	cout << json.as<int64_t>(std::vector<std::string_view>{ "4", "vim", "[1]" }) << endl;
 	cout << json.as<int64_t>(std::vector<std::string>{ "4", "vim", "[1]" }) << endl;
+	cout << json.as<bool>("5") << endl;
+	
+	auto vvv = json.as<Null>("6");
+
+	std::string str1 = "1,2,3";
+	std::string str2 = "\"wan,ko\",1,\"ne,ko\",2,\",ko\",3,\"ko,\",4,5";
+	std::string str3 = "";
+	std::string str4 = "\"ne,ko\"";
+	std::string str5 = ",";
+
+	auto v1 = util::smartSplit(str1, ',');
+	auto v2 = util::smartSplit(str2, ',');
+	auto v3 = util::smartSplit(str3, ',');
+	auto v4 = util::smartSplit(str4, ',');
+	auto v5 = util::smartSplit(str5, ',');
+
+	return 0;
 }
 
