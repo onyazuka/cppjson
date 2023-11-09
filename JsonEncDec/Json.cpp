@@ -2,6 +2,7 @@
 #include "Json.hpp"
 #include <stdexcept>
 #include <charconv>
+#include <iostream>
 
 using namespace json;
 
@@ -13,7 +14,7 @@ std::string_view util::strip(std::string_view v) {
 	if (p1 == std::string_view::npos) {
 		return {};
 	}
-	return v.substr(p1, p2);
+	return v.substr(p1, p2 ? p2 - p1 + 1 : v.npos);
 }
 
 std::vector<std::string_view> util::split(std::string_view v, const std::string& delim) {
@@ -39,12 +40,14 @@ std::vector<std::string_view> util::smartSplit(std::string_view v, char delim) {
 	// not supported characters
 	assert(delim != '"' && delim != '\\');
 	bool insideString = false;
+	size_t insideArray = 0;
+	size_t insideObj = 0;
 	size_t lastPos = 0;
 	size_t pos = 0;
 	std::vector<std::string_view> res;
 	while (pos < v.size()) {
 		if (v[pos] == delim) {
-			if (insideString) {
+			if (insideString || insideArray || insideObj) {
 				;
 			}
 			else {
@@ -60,6 +63,28 @@ std::vector<std::string_view> util::smartSplit(std::string_view v, char delim) {
 			}
 			else {
 				insideString = !insideString;
+			}
+		}
+		else if (v[pos] == '[' || v[pos] == ']') {
+			if ((pos > 0) && (v[pos - 1] == '\\')) {
+				// escaped quote - do nothing
+				;
+			}
+			else {
+				if (v[pos] == '[') ++insideArray;
+				// if v[pos] == ']'
+				else --insideArray;
+			}
+		}
+		else if (v[pos] == '{' || v[pos] == '}') {
+			if ((pos > 0) && (v[pos - 1] == '\\')) {
+				// escaped quote - do nothing
+				;
+			}
+			else {
+				if (v[pos] == '{') ++insideObj;
+				// if v[pos] == '}'
+				else --insideObj;
 			}
 		}
 		else {
@@ -341,7 +366,7 @@ Node* JsonDecoder::decodeArr(std::string_view v) {
 	ArrNode* arr = new ArrNode();
 	try {
 		for (std::string_view elem : elems) {
-			arr->add(decodeImpl(util::strip(v)));
+			arr->add(decodeImpl(util::strip(elem)));
 		}
 	}
 	catch (std::exception& ex) {
@@ -356,6 +381,7 @@ Node* JsonDecoder::decodeObj(std::string_view v) {
 	ObjNode* obj = new ObjNode();
 	Node* valNode = nullptr;
 	try {
+		size_t i = 0;
 		for (std::string_view elem : elems) {
 			auto pair = util::smartSplit(util::strip(std::string_view{ elem.data(), elem.size() }), ':');
 			if (pair.size() != 2) {
@@ -367,7 +393,7 @@ Node* JsonDecoder::decodeObj(std::string_view v) {
 			if (!check::isStr(pair[0])) {
 				throw std::runtime_error("invalid object node");
 			}
-			valNode = decodeImpl(pair[1]);
+			valNode = decodeImpl(util::strip(pair[1]));
 			obj->add(std::string(pair[0].data() + 1, pair[0].size() - 2), valNode);
 		}
 	}

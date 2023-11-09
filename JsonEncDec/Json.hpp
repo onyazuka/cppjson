@@ -8,6 +8,7 @@
 #include <optional>
 #include <algorithm>
 #include <cassert>
+#include <stdexcept>
 
 
 namespace json {
@@ -119,7 +120,11 @@ namespace json {
 	public:
 		Json();
 		Json(Node* r);
+		Json(const Json&) = delete;
+		Json& operator=(const Json&) = delete;
 		~Json();
+		template<typename T>
+		T as();
 		template<typename T>
 		T as(const std::string& key);
 		template<typename T, StringVector Cont>
@@ -174,16 +179,20 @@ namespace json {
 					}
 				}
 				else {
-					assert(false);
+					throw std::invalid_argument("Invalid index to array");
 				}
 			}
 			else {
-				assert(false);
+				throw std::out_of_range("Attempt to index a value node");
 			}
 		}
 		return curNode;
 	}
 
+	template<typename T>
+	T Json::as() {
+		return _asImpl<T>(root);
+	}
 
 	// limitations - '.' delimiter and '[]' indexes
 	template<typename T>
