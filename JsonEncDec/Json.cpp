@@ -318,6 +318,7 @@ std::vector<std::string> Json::_keysImpl(Node* node) {
 	else {
 		assert(false);
 	}
+	return {};
 }
 
 size_t Json::_arrSizeImpl(Node* node) {
@@ -333,6 +334,7 @@ size_t Json::_arrSizeImpl(Node* node) {
 	else {
 		assert(false);
 	}
+	return {};
 }
 
 Node* Json::get(const std::string& key) {
@@ -453,4 +455,124 @@ Node* JsonDecoder::decodeObj(std::string_view v) {
 		throw ex;
 	}
 	return obj;
+}
+
+JsonEncoder::JsonEncoder() {
+	;
+}
+
+std::string JsonEncoder::encode(const Json& json) {
+	if (json.empty()) {
+		return "";
+	}
+	std::string res;
+	Node* node = json.root;
+	encodeImpl(res, node);
+	return res;
+}
+
+void JsonEncoder::encodeImpl(std::string& res, Node* node) {
+	switch (node->type) {
+	case Node::Type::Null:
+		encodeNull(res);
+		break;
+	case Node::Type::Bool:
+		encodeBool(res, node);
+		break;
+	case Node::Type::Int:
+		encodeInt(res, node);
+		break;
+	case Node::Type::Float:
+		encodeFloat(res, node);
+		break;
+	case Node::Type::String:
+		encodeStr(res, node);
+		break;
+	case Node::Type::Array:
+		encodeArray(res, node);
+		break;
+	case Node::Type::Object:
+		encodeObj(res, node);
+		break;
+	default:
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeNull(std::string& s) {
+	s.append("null");
+}
+
+void JsonEncoder::encodeBool(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
+		bool val = ptr->as<bool>();
+		s.append(val ? "true" : "false");
+	}
+	else {
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeInt(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
+		s.append(std::to_string(ptr->as<int64_t>()));
+	}
+	else {
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeFloat(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
+		s.append(std::to_string(ptr->as<double>()));
+	}
+	else {
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeStr(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
+		s.append("\"").append(ptr->as<std::string>()).append("\"");
+	}
+	else {
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeArray(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ArrNode*>(node); ptr) {
+		s.append("[");
+		const auto& arrNodes = ptr->get();
+		for (size_t i = 0; i < arrNodes.size(); ++i) {
+			encodeImpl(s, arrNodes[i]);
+			if (i < (arrNodes.size() - 1)) {
+				s.append(",");
+			}
+		}
+		s.append("]");
+	}
+	else {
+		assert(false);
+	}
+}
+
+void JsonEncoder::encodeObj(std::string& s, Node* node) {
+	if (auto ptr = dynamic_cast<ObjNode*>(node); ptr) {
+		s.append("{");
+		const auto& objItems = ptr->get();
+		size_t i = 0;
+		for (const auto& [key, curNode] : objItems) {
+			s.append(std::format("\"{}\":", key));
+			encodeImpl(s, curNode);
+			if (i < objItems.size() - 1) {
+				s.append(",");
+			}
+			++i;
+		}
+		s.append("}");
+	}
+	else {
+		assert(false);
+	}
 }

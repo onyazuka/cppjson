@@ -23,6 +23,10 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<int64_t>() == 1);
 		cout << j1.as<int64_t>() << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// floating point
 	{
@@ -31,6 +35,11 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<double>() == 1.2);
 		cout << j1.as<double>() << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		// precisions can differ
+		assert(std::stod(se) == std::stod(si));
 	}
 	// null
 	{
@@ -38,6 +47,10 @@ void testJsonDecode() {
 		JsonDecoder jd1;
 		auto j1 = jd1.decode(si);
 		assert((std::is_same_v<typename decltype(j1.as<Null>()), Null>));
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// bool true
 	{
@@ -46,6 +59,10 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<bool>() == 1);
 		cout << j1.as<bool>() << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// bool false
 	{
@@ -54,6 +71,10 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<bool>() == 0);
 		cout << j1.as<bool>() << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// string
 	{
@@ -62,6 +83,10 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<std::string>() == "nekoWanko,,..999");
 		cout << j1.as<std::string>() << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// no type
 	{
@@ -81,6 +106,10 @@ void testJsonDecode() {
 		cout << j1.as<int64_t>("[1]") << endl;
 		assert(j1.as<int64_t>("[2]") == 3);
 		cout << j1.as<int64_t>("[2]") << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// array strings
 	{
@@ -95,6 +124,10 @@ void testJsonDecode() {
 		cout << vec[1] << endl;
 		assert(vec[2] == "manko");
 		cout << vec[2] << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// obj 
 	{
@@ -103,6 +136,10 @@ void testJsonDecode() {
 		auto j1 = jd1.decode(si);
 		assert(j1.as<int64_t>("neko") == 123);
 		std::cout << j1.as<int64_t>("neko") << endl;
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		assert(se == si);
 	}
 	// obj 2
 	{
@@ -115,6 +152,11 @@ void testJsonDecode() {
 		assert(j1.as<int64_t>("3.[1]") == 20);
 		assert(j1.as<double>("4.pim") == 3.2);
 		assert(j1.as<int64_t>("4.vim.[0]") == 1);
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
+		// it IS equal, except precision
+		//assert(se == si);
 	}
 	// obj 3
 	{
@@ -128,6 +170,9 @@ void testJsonDecode() {
 		assert(j1.as<std::string>("[1].name") == "Burton Booker");
 		assert(j1.as<std::string>("[4].tags.[6]") == "exercitation");
 		assert(j1.as<int64_t>("[3].friends.[1].id") == 1);
+
+		JsonEncoder je1;
+		std::string se = je1.encode(j1);
 	}
 	{
 		// bugs

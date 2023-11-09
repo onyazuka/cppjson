@@ -140,6 +140,9 @@ namespace json {
 		template<StringVector Cont>
 		size_t arrSize(const Cont& keys);
 	private:
+		friend class JsonDecoder;
+		friend class JsonEncoder;
+
 		Node* get(const std::string& key);
 		template<StringVector Cont>
 		Node* get(const Cont& keys);
@@ -271,6 +274,21 @@ namespace json {
 		Node* decodeStr(std::string_view v);
 		Node* decodeBool(std::string_view v);
 		Node* decodeNull(std::string_view v);
+	};
+
+	class JsonEncoder {
+	public:
+		JsonEncoder();
+		std::string encode(const Json& json);
+	private:
+		void encodeImpl(std::string& s, Node* node);
+		void encodeNull(std::string& s);
+		void encodeBool(std::string& s, Node* node);
+		void encodeInt(std::string& s, Node* node);
+		void encodeFloat(std::string& s, Node* node);
+		void encodeStr(std::string& s, Node* node);
+		void encodeArray(std::string& s, Node* node);
+		void encodeObj(std::string& s, Node* node);
 	};
 
 }
