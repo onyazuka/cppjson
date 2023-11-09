@@ -131,10 +131,10 @@ void testJsonDecode() {
 	}
 	{
 		// bugs
-		std::string si = "{\"0\":0,\"1\":1}";
+		/*std::string si = "{\"0\":0,\"1\":1}";
 		JsonDecoder jd1;
 		auto j1 = jd1.decode(si);
-		cout << j1.as<int64_t>("2");
+		cout << j1.as<int64_t>("2");*/
 	}
 	return;
 }
@@ -207,6 +207,12 @@ int main()
 	auto v3 = util::smartSplit(str3, ',');
 	auto v4 = util::smartSplit(str4, ',');
 	auto v5 = util::smartSplit(str5, ',');
+
+	for (const auto& key : json.keys("4")) {
+		std::cout << key << ", ";
+	}
+	std::cout << std::endl;
+	std::cout << std::format("Size of '3' is: {}\n", json.arrSize("3"));
 
 	testJsonDecode();
 

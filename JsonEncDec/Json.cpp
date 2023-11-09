@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <charconv>
 #include <iostream>
+#include <format>
 
 using namespace json;
 
@@ -265,6 +266,14 @@ void ObjNode::add(const std::string& key, Node* node) {
 	val[key] = node;
 }
 
+std::vector<std::string> ObjNode::keys() {
+	std::vector<std::string> res;
+	for (const auto& [key, v] : val) {
+		res.push_back(key);
+	}
+	return res;
+}
+
 Json::Json(Node* r)
 	: root{ r }
 {
@@ -283,6 +292,47 @@ Json::~Json() {
 
 bool Json::empty() const {
 	return root == nullptr;
+}
+
+// getting keys of object nodes
+std::vector<std::string> Json::keys(const std::string& key) {
+	Node* node = get(key);
+	return _keysImpl(node);
+}
+
+size_t Json::arrSize(const std::string& key) {
+	Node* node = get(key);
+	return _arrSizeImpl(node);
+}
+
+std::vector<std::string> Json::_keysImpl(Node* node) {
+	if (!node) {
+		throw std::out_of_range(std::format("Invalid keys"));
+	}
+	if (node->type != Node::Type::Object) {
+		throw std::runtime_error(std::format("Invalid keys: node is not an object"));
+	}
+	if (auto ptr = dynamic_cast<ObjNode*>(node); ptr) {
+		return ptr->keys();
+	}
+	else {
+		assert(false);
+	}
+}
+
+size_t Json::_arrSizeImpl(Node* node) {
+	if (!node) {
+		throw std::out_of_range(std::format("Invalid keys"));
+	}
+	if (node->type != Node::Type::Array) {
+		throw std::runtime_error(std::format("Invalid keys: node is not an array"));
+	}
+	if (auto ptr = dynamic_cast<ArrNode*>(node); ptr) {
+		return ptr->size();
+	}
+	else {
+		assert(false);
+	}
 }
 
 Node* Json::get(const std::string& key) {

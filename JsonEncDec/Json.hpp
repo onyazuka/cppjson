@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
+#include <format>
 
 
 namespace json {
@@ -99,6 +100,7 @@ namespace json {
 		template<typename T>
 		std::vector<T> as();
 		void add(Node* node);
+		inline size_t size() const { return val.size(); }
 	private:
 		bool isMonotype() const;
 		std::vector<Node*> val;
@@ -112,6 +114,7 @@ namespace json {
 		const auto& get();
 		Node* get(const std::string& key);
 		void add(const std::string& key, Node* val);
+		std::vector<std::string> keys();
 	private:
 		std::unordered_map<std::string, Node*> val;
 	};
@@ -130,6 +133,12 @@ namespace json {
 		template<typename T, StringVector Cont>
 		T as(const Cont& keys);
 		bool empty() const;
+		std::vector<std::string> keys(const std::string& key);
+		size_t arrSize(const std::string& key);
+		template<StringVector Cont>
+		std::vector<std::string> keys(const Cont& keys);
+		template<StringVector Cont>
+		size_t arrSize(const Cont& keys);
 	private:
 		Node* get(const std::string& key);
 		template<StringVector Cont>
@@ -138,6 +147,8 @@ namespace json {
 		Node* _getImpl(const Cont& keys);
 		template<typename T>
 		T _asImpl(Node* node);
+		std::vector<std::string> _keysImpl(Node* node);
+		size_t _arrSizeImpl(Node* node);
 		Node* root;
 	};
 
@@ -197,12 +208,32 @@ namespace json {
 	// limitations - '.' delimiter and '[]' indexes
 	template<typename T>
 	T Json::as(const std::string& key) {
-		return _asImpl<T>(get(key));
+		Node* node = get(key);
+		if (!node) {
+			throw std::out_of_range(std::format("Invalid keys {}", key));
+		}
+		return _asImpl<T>(node);
 	}
 
 	template<typename T, StringVector Cont>
 	T Json::as(const Cont& keys) {
-		return _asImpl<T>(get(keys));
+		Node* node = get(keys);
+		if (!node) {
+			throw std::out_of_range("Invalid keys");
+		}
+		return _asImpl<T>(node);
+	}
+
+	template<StringVector Cont>
+	std::vector<std::string> Json::keys(const Cont& keys) {
+		Node* node = get(keys);
+		return _keysImpl(node);
+	}
+
+	template<StringVector Cont>
+	size_t Json::arrSize(const Cont& keys) {
+		Node* node = get(keys);
+		return _arrSizeImpl(node);
 	}
 
 	template<typename T>
