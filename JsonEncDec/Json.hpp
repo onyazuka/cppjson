@@ -179,8 +179,6 @@ namespace json {
 		template<StringVector Cont>
 		Node& get(const Cont& keys);
 		inline Node& get() { return root.value(); }
-		void dump(std::ostream& os);
-		void dump(std::ostream&& os);
 	private:
 		template<StringVector Cont >
 		Node& _getImpl(const Cont& keys);
@@ -300,6 +298,8 @@ namespace json {
 		JsonEncoder();
 		JsonEncoder(const Opts& opts);
 		std::string encode(const Json& json);
+		void dump(const Json& json, std::ostream& os);
+		void dump(const Json& json, std::ostream&& os);
 	private:
 		void encodeImpl(std::string& s, const Node& node);
 		void encodeNull(std::string& s);
@@ -307,7 +307,9 @@ namespace json {
 		void encodeInt(std::string& s, const ValNode& node);
 		void encodeFloat(std::string& s, const ValNode& node);
 		void encodeStr(std::string& s, const ValNode& node);
+		template <bool Hr>
 		void encodeArray(std::string& s, const ArrNode& node);
+		template <bool Hr>
 		void encodeObj(std::string& s, const ObjNode& node);
 		void appendIntendation(std::string& s);
 		Opts opts;
@@ -316,5 +318,46 @@ namespace json {
 			void reset();
 		} ctx;
 	};
+
+	template <bool Hr>
+	void JsonEncoder::encodeArray(std::string& s, const ArrNode& node) {
+		++ctx.intendationLvl;
+		s.append("[");
+		if constexpr (Hr) s.append("\n");
+		const auto& arrNodes = node.ccont();
+		for (size_t i = 0; i < arrNodes.size(); ++i) {
+			if constexpr (Hr) appendIntendation(s);
+			encodeImpl(s, arrNodes[i]);
+			if (i < (arrNodes.size() - 1)) {
+				s.append(",");
+			}
+			if constexpr (Hr) s.append("\n");
+		}
+		--ctx.intendationLvl;
+		if constexpr (Hr) appendIntendation(s);
+		s.append("]");
+	}
+
+	template <bool Hr>
+	void JsonEncoder::encodeObj(std::string& s, const ObjNode& node) {
+		++ctx.intendationLvl;
+		s.append("{");
+		if constexpr (Hr)  s.append("\n");
+		const auto& objItems = node.ccont();
+		size_t i = 0;
+		for (const auto& [key, curNode] : objItems) {
+			if constexpr (Hr)  appendIntendation(s);
+			s.append(std::format("\"{}\":", key));
+			encodeImpl(s, curNode);
+			if (i < objItems.size() - 1) {
+				s.append(",");
+			}
+			++i;
+			if constexpr (Hr)  s.append("\n");
+		}
+		--ctx.intendationLvl;
+		if constexpr (Hr)  appendIntendation(s);
+		s.append("}");
+	}
 
 }

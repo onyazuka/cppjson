@@ -332,16 +332,6 @@ Node& Json::get(const std::string& key) {
 	return node;
 }
 
-void Json::dump(std::ostream& os) {
-	JsonEncoder enc;
-	os << enc.encode(*this) << std::endl;
-}
-
-void Json::dump(std::ostream&& os) {
-	JsonEncoder enc;
-	os << enc.encode(*this) << std::endl;
-}
-
 JsonDecoder::JsonDecoder() {
 
 }
@@ -503,10 +493,12 @@ void JsonEncoder::encodeImpl(std::string& res, const Node& node) {
 		}
 	}
 	else if (std::holds_alternative<ArrNode>(node)) {
-		encodeArray(res, std::get<ArrNode>(node));
+		if (opts.humanReadable) encodeArray<true>(res, std::get<ArrNode>(node));
+		else encodeArray<false>(res, std::get<ArrNode>(node));
 	}
 	else if (std::holds_alternative<ObjNode>(node)) {
-		encodeObj(res, std::get<ObjNode>(node));
+		if (opts.humanReadable) encodeObj<true>(res, std::get<ObjNode>(node));
+		else encodeObj<false>(res, std::get<ObjNode>(node));
 	}
 	else {
 		assert(false);
@@ -534,47 +526,16 @@ void JsonEncoder::encodeStr(std::string& s, const ValNode& node) {
 	s.append("\"").append(node.as<std::string>()).append("\"");
 }
 
-void JsonEncoder::encodeArray(std::string& s, const ArrNode& node) {
-	++ctx.intendationLvl;
-	s.append("[");
-	if (opts.humanReadable) s.append("\n");
-	const auto& arrNodes = node.ccont();
-	for (size_t i = 0; i < arrNodes.size(); ++i) {
-		if (opts.humanReadable) appendIntendation(s);
-		encodeImpl(s, arrNodes[i]);
-		if (i < (arrNodes.size() - 1)) {
-			s.append(",");
-		}
-		if (opts.humanReadable) s.append("\n");
-	}
-	--ctx.intendationLvl;
-	if (opts.humanReadable) appendIntendation(s);
-	s.append("]");
-}
-
-void JsonEncoder::encodeObj(std::string& s, const ObjNode& node) {
-	++ctx.intendationLvl;
-	s.append("{");
-	if (opts.humanReadable) s.append("\n");
-	const auto& objItems = node.ccont();
-	size_t i = 0;
-	for (const auto& [key, curNode] : objItems) {
-		if (opts.humanReadable) appendIntendation(s);
-		s.append(std::format("\"{}\":", key));
-		encodeImpl(s, curNode);
-		if (i < objItems.size() - 1) {
-			s.append(",");
-		}
-		++i;
-		if(opts.humanReadable) s.append("\n");
-	}
-	--ctx.intendationLvl;
-	if (opts.humanReadable) appendIntendation(s);
-	s.append("}");
-}
-
 void JsonEncoder::appendIntendation(std::string& s) {
 	for (size_t i = 0; i < ctx.intendationLvl; ++i) {
 		s.append("    ");
 	}
+}
+
+void JsonEncoder::dump(const Json& json, std::ostream& os) {
+	os << encode(json) << std::endl;
+}
+
+void JsonEncoder::dump(const Json& json, std::ostream&& os) {
+	os << encode(json) << std::endl;
 }
