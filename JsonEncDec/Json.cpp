@@ -165,18 +165,13 @@ bool check::isValueType(NodeType t) {
 	return t == NodeType::Bool || t == NodeType::Null || t == NodeType::Int || t == NodeType::Float || t == NodeType::String;
 }
 
-ValNode::ValNode(int64_t v)
-	: val{ v }, _type{NodeType::Int}
-{
-	;
-}
-
-ValNode::ValNode(double d)
-	: val{ d }, _type{ NodeType::Float }
-{
-
-}
 ValNode::ValNode(const std::string& s)
+	: val{ s }, _type{ NodeType::String }
+{
+
+}
+
+ValNode::ValNode(const char* s) 
 	: val{ s }, _type{ NodeType::String }
 {
 

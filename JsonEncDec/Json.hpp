@@ -79,9 +79,17 @@ namespace json {
 			bool,
 			Null
 		>;
-		ValNode(int64_t v);
-		ValNode(double d);
+		template<typename IntT>
+			requires std::is_integral_v<IntT>
+		ValNode(IntT v);
+		// potential overflow
+		ValNode(uint64_t v) = delete;
+		template<typename FloatT>
+			requires std::is_floating_point_v<FloatT>
+		ValNode(FloatT d);
 		ValNode(const std::string& s);
+		// defined, because bool constructor is called instead with this argument type
+		ValNode(const char* s);
 		ValNode(bool b);
 		ValNode();
 		template<typename T>
@@ -94,6 +102,22 @@ namespace json {
 		Val val;
 		NodeType _type;
 	};
+
+	template<typename IntT>
+		requires std::is_integral_v<IntT>
+	ValNode::ValNode(IntT v)
+		: val{ v }, _type{ NodeType::Int }
+	{
+
+	}
+
+	template<typename FloatT>
+		requires std::is_floating_point_v<FloatT>
+	ValNode::ValNode(FloatT d)
+		: val{ d }, _type{ NodeType::Float }
+	{
+
+	}
 
 	class ArrNode {
 	public:

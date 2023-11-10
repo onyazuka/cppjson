@@ -281,6 +281,8 @@ int main()
 	Json json3 = JsonDecoder().decode(std::ifstream("f:/1.json"));
 	json3.dump(std::cout);
 
+	ValNode vvvvv("1.1");
+
 	return 0;
 }
 
