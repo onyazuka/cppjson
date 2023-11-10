@@ -294,7 +294,11 @@ namespace json {
 
 	class JsonEncoder {
 	public:
+		struct Opts {
+			bool humanReadable = false;
+		};
 		JsonEncoder();
+		JsonEncoder(const Opts& opts);
 		std::string encode(const Json& json);
 	private:
 		void encodeImpl(std::string& s, const Node& node);
@@ -305,6 +309,12 @@ namespace json {
 		void encodeStr(std::string& s, const ValNode& node);
 		void encodeArray(std::string& s, const ArrNode& node);
 		void encodeObj(std::string& s, const ObjNode& node);
+		void appendIntendation(std::string& s);
+		Opts opts;
+		struct EncodingCtx {
+			size_t intendationLvl = 0;
+			void reset();
+		} ctx;
 	};
 
 }

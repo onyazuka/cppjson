@@ -277,6 +277,7 @@ int main()
 	std::get<ObjNode>(json2.get()).cont()["7"] = ValNode(std::string("Aya ningen da"));
 	std::get<ArrNode>(json2.get("3")).cont().push_back(ValNode(11.2));
 	json2.dump(std::cout);
+	std::cout << JsonEncoder({ true }).encode(json2) << endl;
 	json2.dump(std::ofstream("f:/1.json"));
 	Json json3 = JsonDecoder().decode(std::ifstream("f:/1.json"));
 	json3.dump(std::cout);

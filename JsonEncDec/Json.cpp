@@ -460,7 +460,14 @@ JsonEncoder::JsonEncoder() {
 	;
 }
 
+JsonEncoder::JsonEncoder(const Opts& opts) 
+	: opts{opts}
+{
+	;
+}
+
 std::string JsonEncoder::encode(const Json& json) {
+	ctx.reset();
 	if (json.empty()) {
 		return "";
 	}
@@ -468,6 +475,10 @@ std::string JsonEncoder::encode(const Json& json) {
 	const Node& node = json.root.value();
 	encodeImpl(res, node);
 	return res;
+}
+
+void JsonEncoder::EncodingCtx::reset() {
+	intendationLvl = 0;
 }
 
 void JsonEncoder::encodeImpl(std::string& res, const Node& node) {
@@ -524,28 +535,46 @@ void JsonEncoder::encodeStr(std::string& s, const ValNode& node) {
 }
 
 void JsonEncoder::encodeArray(std::string& s, const ArrNode& node) {
+	++ctx.intendationLvl;
 	s.append("[");
+	if (opts.humanReadable) s.append("\n");
 	const auto& arrNodes = node.ccont();
 	for (size_t i = 0; i < arrNodes.size(); ++i) {
+		if (opts.humanReadable) appendIntendation(s);
 		encodeImpl(s, arrNodes[i]);
 		if (i < (arrNodes.size() - 1)) {
 			s.append(",");
 		}
+		if (opts.humanReadable) s.append("\n");
 	}
+	--ctx.intendationLvl;
+	if (opts.humanReadable) appendIntendation(s);
 	s.append("]");
 }
 
 void JsonEncoder::encodeObj(std::string& s, const ObjNode& node) {
+	++ctx.intendationLvl;
 	s.append("{");
+	if (opts.humanReadable) s.append("\n");
 	const auto& objItems = node.ccont();
 	size_t i = 0;
 	for (const auto& [key, curNode] : objItems) {
+		if (opts.humanReadable) appendIntendation(s);
 		s.append(std::format("\"{}\":", key));
 		encodeImpl(s, curNode);
 		if (i < objItems.size() - 1) {
 			s.append(",");
 		}
 		++i;
+		if(opts.humanReadable) s.append("\n");
 	}
+	--ctx.intendationLvl;
+	if (opts.humanReadable) appendIntendation(s);
 	s.append("}");
+}
+
+void JsonEncoder::appendIntendation(std::string& s) {
+	for (size_t i = 0; i < ctx.intendationLvl; ++i) {
+		s.append("    ");
+	}
 }
