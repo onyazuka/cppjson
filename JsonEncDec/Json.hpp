@@ -88,6 +88,7 @@ namespace json {
 			requires std::is_floating_point_v<FloatT>
 		ValNode(FloatT d);
 		ValNode(const std::string& s);
+		ValNode(std::string&& s);
 		// defined, because bool constructor is called instead with this argument type
 		ValNode(const char* s);
 		ValNode(bool b);

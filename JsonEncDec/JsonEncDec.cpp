@@ -188,7 +188,7 @@ void testJsonDecode() {
 
 int main()
 {
-	ValNode i((int64_t)10);
+	ValNode i((int64_t)10); 
 	ValNode s(std::string("neko"));
 	ArrNode arr({ ValNode((int64_t)15), ValNode((int64_t)20) , ValNode((int64_t)25) });
 	ObjNode obj({

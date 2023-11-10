@@ -171,6 +171,12 @@ ValNode::ValNode(const std::string& s)
 
 }
 
+ValNode::ValNode(std::string&& s) 
+	: val{ std::move(s) }, _type{NodeType::String}
+{
+
+}
+
 ValNode::ValNode(const char* s) 
 	: val{ s }, _type{ NodeType::String }
 {
@@ -419,6 +425,7 @@ Node JsonDecoder::decodeStr(std::string_view v) {
 Node JsonDecoder::decodeArr(std::string_view v) {
 	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
 	ArrNode arr;
+	arr.cont().reserve(elems.size());
 	for (std::string_view elem : elems) {
 		arr.add(decodeImpl(util::strip(elem)));
 	}
@@ -428,6 +435,7 @@ Node JsonDecoder::decodeArr(std::string_view v) {
 Node JsonDecoder::decodeObj(std::string_view v) {
 	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
 	ObjNode obj;
+	obj.cont().reserve(elems.size());
 	size_t i = 0;
 	for (std::string_view elem : elems) {
 		auto pair = util::smartSplit(util::strip(std::string_view{ elem.data(), elem.size() }), ':');
