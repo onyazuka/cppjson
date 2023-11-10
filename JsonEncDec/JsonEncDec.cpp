@@ -1,6 +1,7 @@
 #include <iostream>
 #include <format>
 #include <chrono>
+#include <fstream>
 #include "Json.hpp"
 
 using namespace std;
@@ -166,7 +167,7 @@ void testJsonDecode() {
 		auto before = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
 		auto j1 = jd1.decode(si);
 		auto after = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count();
-		cout << format("Time: {0}mcs", (after - before));
+		cout << format("Time: {0}mcs\n", (after - before));
 		assert(j1.as<std::string>("[1].name") == "Burton Booker");
 		assert(j1.as<std::string>("[4].tags.[6]") == "exercitation");
 		assert(j1.as<int64_t>("[3].friends.[1].id") == 1);
@@ -187,20 +188,20 @@ void testJsonDecode() {
 
 int main()
 {
-	Node* i = new ValNode((int64_t)10);
-	Node* s = new ValNode(std::string("neko"));
-	Node* arr = new ArrNode({ new ValNode((int64_t)15), new ValNode((int64_t)20) , new ValNode((int64_t)25) });
-	Node* obj = new ObjNode({
-		{ "pim", new ValNode((double)3.2) },
-		{ "bim", new ValNode(std::string("888"))},
+	ValNode i((int64_t)10);
+	ValNode s(std::string("neko"));
+	ArrNode arr({ ValNode((int64_t)15), ValNode((int64_t)20) , ValNode((int64_t)25) });
+	ObjNode obj({
+		{ "pim", ValNode((double)3.2) },
+		{ "bim", ValNode(std::string("888"))},
 		{"vim",
-			new ArrNode({
-				new ValNode((int64_t)1), new ValNode((int64_t)2) , new ValNode((int64_t)3)
+			ArrNode({
+				ValNode((int64_t)1), ValNode((int64_t)2) , ValNode((int64_t)3)
 			})
 		} });
 
-	Node* b = new ValNode((bool)true);
-	Node* n = new ValNode();
+	ValNode b((bool)true);
+	ValNode n;
 
 	/*
 		{
@@ -215,7 +216,7 @@ int main()
 		}
 	*/
 
-	Node* root = new ObjNode({
+	Node root = ObjNode({
 		{"1", i},
 		{"2", s},
 		{"3", arr},
@@ -261,6 +262,24 @@ int main()
 
 	testJsonDecode();
 
+	Json json1 = json;
+	json1.get() = ValNode((int64_t)10);
+
+	cout << format("{:-^40}\n", "Testing json encoding");
+	cout << JsonEncoder().encode(json) << endl;
+	cout << JsonEncoder().encode(json1) << endl;
+
+	Json json2 = json;
+	json2.get("2") = ObjNode({
+		{"hell", ValNode(std::string("o"))},
+		{"unk", ValNode(std::string("o"))},
+		});
+	std::get<ObjNode>(json2.get()).cont()["7"] = ValNode(std::string("Aya ningen da"));
+	std::get<ArrNode>(json2.get("3")).cont().push_back(ValNode(11.2));
+	json2.dump(std::cout);
+	json2.dump(std::ofstream("f:/1.json"));
+	Json json3 = JsonDecoder().decode(std::ifstream("f:/1.json"));
+	json3.dump(std::cout);
 
 	return 0;
 }

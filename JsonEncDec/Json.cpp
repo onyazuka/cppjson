@@ -4,6 +4,7 @@
 #include <charconv>
 #include <iostream>
 #include <format>
+#include <sstream>
 
 using namespace json;
 
@@ -133,140 +134,140 @@ bool check::isNumberStart(char ch) {
 	return (ch >= '0' && ch <= '9') || (ch == '-');
 }
 
-Node::Type check::getType(std::string_view v) {
-	if (v.empty()) return Node::Type::NoType;
+NodeType check::getType(std::string_view v) {
+	if (v.empty()) return NodeType::NoType;
 	if (v.size() >= 2) {
 		if (v.front() == '{' && v.back() == '}') {
-			return Node::Type::Object;
+			return NodeType::Object;
 		}
 		else if (v.front() == '[' && v.back() == ']') {
-			return Node::Type::Array;
+			return NodeType::Array;
 		}
 		else if (v.front() == '"' && v.back() == '"') {
-			return Node::Type::String;
+			return NodeType::String;
 		}
 	}
 	if (v == "null") {
-		return Node::Type::Null;
+		return NodeType::Null;
 	}
 	else if (v == "true" || v == "false") {
-		return Node::Type::Bool;
+		return NodeType::Bool;
 	}
 	else if (v.find_first_of(".") != v.npos) {
-		return Node::Type::Float;
+		return NodeType::Float;
 	}
 	else {
-		return Node::Type::Int;
+		return NodeType::Int;
 	}
 }
 
-bool check::isValueType(Node::Type t) {
-	return t == Node::Type::Bool || t == Node::Type::Null || t == Node::Type::Int || t == Node::Type::Float || t == Node::Type::String;
-}
-
-Node::~Node() {
-	;
-}
-
-Node::Node(Type type)
-	: type{ type }
-{
-	;
+bool check::isValueType(NodeType t) {
+	return t == NodeType::Bool || t == NodeType::Null || t == NodeType::Int || t == NodeType::Float || t == NodeType::String;
 }
 
 ValNode::ValNode(int64_t v)
-	: Node{ Node::Type::Int }, val{ v }
+	: val{ v }, _type{NodeType::Int}
 {
 	;
 }
 
 ValNode::ValNode(double d)
-	: Node{ Node::Type::Float }, val{ d }
+	: val{ d }, _type{ NodeType::Float }
 {
 
 }
 ValNode::ValNode(const std::string& s)
-	: Node{ Node::Type::String }, val{ s }
+	: val{ s }, _type{ NodeType::String }
 {
 
 }
 
 ValNode::ValNode(bool b)
-	: Node{Node::Type::Bool}, val{b}
+	: val{b}, _type{ NodeType::Bool }
 {
 
 }
 
 ValNode::ValNode() 
-	: Node{ Node::Type::Null }, val{Null()}
+	: val{Null()}, _type{ NodeType::Null }
 {
 	
 }
 
 ArrNode::ArrNode()
-	: Node{ Node::Type::Array }, val{}
+	: val{}, _type{ NodeType::Array }
 {
 
 }
 
-ArrNode::ArrNode(std::vector<Node*>&& v)
-	: Node{ Node::Type::Array }, val{ std::move(v) }
+
+ArrNode::ArrNode(const std::vector<Node>& v)
+	: _type{ NodeType::Array }
 {
-
+	val = v;
 }
 
-ArrNode::~ArrNode() {
-	for (Node* node : val) {
-		delete node;
-	}
+ArrNode::ArrNode(std::vector<Node>&& v)
+	: _type{NodeType::Object}
+{
+	val = std::move(v);
 }
 
-const auto& ArrNode::get() {
+const std::vector<Node>& ArrNode::ccont() const {
 	return val;
 }
 
-Node* ArrNode::get(size_t idx) {
+std::vector<Node>& ArrNode::cont() {
+	return val;
+}
+
+Node& ArrNode::get(size_t idx) {
 	return val.at(idx);
 }
 
-void ArrNode::add(Node* node) {
+void ArrNode::add(const Node& node) {
 	val.push_back(node);
 }
 
 bool ArrNode::isMonotype() const {
 	if (val.size() == 0) return true;
-	Type t0 = val[0]->type;
+	NodeType t0 = std::get<ValNode>(val[0]).type();
 	return std::all_of(val.cbegin(), val.cend(), [t0](const auto& v) {
-		return v->type == t0;
+		return std::get<ValNode>(v).type() == t0;
 		});
 }
 
 ObjNode::ObjNode()
-	: Node{ Node::Type::Object }
+	: _type{ NodeType::Object }
 {
 
 }
 
-ObjNode::ObjNode(std::unordered_map<std::string, Node*>&& m)
-	: Node{ Node::Type::Object }, val{ std::move(m) } {
-
+ObjNode::ObjNode(const std::unordered_map<std::string, Node>& m)
+	: _type{ NodeType::Object } 
+{
+	val = m;
 }
 
-ObjNode::~ObjNode() {
-	for (const auto& v : val) {
-		delete v.second;
-	}
+ObjNode::ObjNode(std::unordered_map<std::string, Node>&& m)
+	: _type{ NodeType::Object }
+{
+	val = std::move(m);
 }
 
-const auto& ObjNode::get() {
+const std::unordered_map<std::string, Node>& ObjNode::ccont() const {
 	return val;
 }
 
-Node* ObjNode::get(const std::string& key) {
+std::unordered_map<std::string, Node>& ObjNode::cont() {
+	return val;
+}
+
+Node& ObjNode::get(const std::string& key) {
 	return val.at(key);
 }
 
-void ObjNode::add(const std::string& key, Node* node) {
+void ObjNode::add(const std::string& key, const Node& node) {
 	val[key] = node;
 }
 
@@ -278,46 +279,42 @@ std::vector<std::string> ObjNode::keys() {
 	return res;
 }
 
-Json::Json(Node* r)
+Json::Json(Node& r) 
 	: root{ r }
+{
+
+}
+
+Json::Json(Node&& r)
+	: root{ std::move(r) }
 {
 	;
 }
 
 Json::Json() 
-	: root{nullptr}
+	: root{std::nullopt}
 {
 
 }
 
-Json::~Json() {
-	delete root;
-}
-
 bool Json::empty() const {
-	return root == nullptr;
+	return root == std::nullopt;
 }
 
 // getting keys of object nodes
 std::vector<std::string> Json::keys(const std::string& key) {
-	Node* node = get(key);
+	Node& node = get(key);
 	return _keysImpl(node);
 }
 
 size_t Json::arrSize(const std::string& key) {
-	Node* node = get(key);
+	Node& node = get(key);
 	return _arrSizeImpl(node);
 }
 
-std::vector<std::string> Json::_keysImpl(Node* node) {
-	if (!node) {
-		throw std::out_of_range(std::format("Invalid keys"));
-	}
-	if (node->type != Node::Type::Object) {
-		throw std::runtime_error(std::format("Invalid keys: node is not an object"));
-	}
-	if (auto ptr = dynamic_cast<ObjNode*>(node); ptr) {
-		return ptr->keys();
+std::vector<std::string> Json::_keysImpl(Node& node) {
+	if (std::holds_alternative<ObjNode>(node)) {
+		return std::get<ObjNode>(node).keys();
 	}
 	else {
 		assert(false);
@@ -325,15 +322,9 @@ std::vector<std::string> Json::_keysImpl(Node* node) {
 	return {};
 }
 
-size_t Json::_arrSizeImpl(Node* node) {
-	if (!node) {
-		throw std::out_of_range(std::format("Invalid keys"));
-	}
-	if (node->type != Node::Type::Array) {
-		throw std::runtime_error(std::format("Invalid keys: node is not an array"));
-	}
-	if (auto ptr = dynamic_cast<ArrNode*>(node); ptr) {
-		return ptr->size();
+size_t Json::_arrSizeImpl(Node& node) {
+	if (std::holds_alternative<ArrNode>(node)) {
+		return std::get<ArrNode>(node).size();
 	}
 	else {
 		assert(false);
@@ -341,12 +332,19 @@ size_t Json::_arrSizeImpl(Node* node) {
 	return {};
 }
 
-Node* Json::get(const std::string& key) {
-	Node* node = _getImpl(util::split(key, "."));
-	if (!node) {
-		throw std::out_of_range(std::format("invalid keys: {}", key));
-	}
+Node& Json::get(const std::string& key) {
+	Node& node = _getImpl(util::split(key, "."));
 	return node;
+}
+
+void Json::dump(std::ostream& os) {
+	JsonEncoder enc;
+	os << enc.encode(*this) << std::endl;
+}
+
+void Json::dump(std::ostream&& os) {
+	JsonEncoder enc;
+	os << enc.encode(*this) << std::endl;
 }
 
 JsonDecoder::JsonDecoder() {
@@ -354,113 +352,111 @@ JsonDecoder::JsonDecoder() {
 }
 
 Json JsonDecoder::decode(std::string_view v) {
+	if (v.empty()) return Json();
 	return Json(decodeImpl(v));
 }
 
-Node* JsonDecoder::decodeImpl(std::string_view v) {
-	if (v.empty()) return nullptr;
+Json JsonDecoder::decode(std::ifstream& is) {
+	std::stringstream ss;
+	ss << is.rdbuf();
+	return Json(decodeImpl(ss.str()));
+}
+
+Json JsonDecoder::decode(std::ifstream&& is) {
+	std::stringstream ss;
+	ss << is.rdbuf();
+	return Json(decodeImpl(ss.str()));
+}
+
+Node JsonDecoder::decodeImpl(std::string_view v) {
 	std::string_view body = util::strip(v);
-	Node::Type type = check::getType(v);
+	NodeType type = check::getType(body);
 	switch (type) {
-	case Node::Type::Object:
-		return decodeObj(v);
-	case Node::Type::Array:
-		return decodeArr(v);
-	case Node::Type::String:
-		return decodeStr(v);
-	case Node::Type::Int:
-		return decodeInt(v);
-	case Node::Type::Float:
-		return decodeFloat(v);
-	case Node::Type::Bool:
-		return decodeBool(v);
-	case Node::Type::Null:
-		return decodeNull(v);
+	case NodeType::Object:
+		return decodeObj(body);
+	case NodeType::Array:
+		return decodeArr(body);
+	case NodeType::String:
+		return decodeStr(body);
+	case NodeType::Int:
+		return decodeInt(body);
+	case NodeType::Float:
+		return decodeFloat(body);
+	case NodeType::Bool:
+		return decodeBool(body);
+	case NodeType::Null:
+		return decodeNull(body);
 	default:
 		throw std::logic_error("JSON: invalid node type");
 	}
 }
 
-Node* JsonDecoder::decodeBool(std::string_view v) {
+Node JsonDecoder::decodeBool(std::string_view v) {
 	if (v == "true") {
-		return new ValNode((bool)(true));
+		return ValNode((bool)(true));
 	}
 	else if (v == "false") {
-		return new ValNode((bool)(false));
+		return ValNode((bool)(false));
 	}
 	throw std::runtime_error("invalid bool node");
 }
 
-Node* JsonDecoder::decodeNull(std::string_view v) {
+Node JsonDecoder::decodeNull(std::string_view v) {
 	if (v == "null") {
-		return new ValNode();
+		return ValNode();
 	}
 	throw std::runtime_error("invalid null node");
 }
 
-Node* JsonDecoder::decodeInt(std::string_view v) {
+Node JsonDecoder::decodeInt(std::string_view v) {
 	int64_t val;
 	if (std::from_chars(v.data(), v.data() + v.size(), val).ec != std::errc{}) {
 		throw std::runtime_error("invalid int node");
 	}
-	return new ValNode(val);
+	return ValNode(val);
 }
 
-Node* JsonDecoder::decodeFloat(std::string_view v) {
+Node JsonDecoder::decodeFloat(std::string_view v) {
 	double val;
 	if (std::from_chars(v.data(), v.data() + v.size(), val).ec != std::errc{}) {
 		throw std::runtime_error("invalid float node");
 	}
-	return new ValNode(val);
+	return ValNode(val);
 }
 
-Node* JsonDecoder::decodeStr(std::string_view v) {
+Node JsonDecoder::decodeStr(std::string_view v) {
 	if (!check::isStr(v)) {
 		throw std::runtime_error("invalid string node");
 	}
-	return new ValNode(std::string(v.data() + 1, v.size() - 2));
+	return ValNode(std::string(v.data() + 1, v.size() - 2));
 }
 
-Node* JsonDecoder::decodeArr(std::string_view v) {
+Node JsonDecoder::decodeArr(std::string_view v) {
 	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
-	ArrNode* arr = new ArrNode();
-	try {
-		for (std::string_view elem : elems) {
-			arr->add(decodeImpl(util::strip(elem)));
-		}
-	}
-	catch (std::exception& ex) {
-		delete arr;
-		throw ex;
+	ArrNode arr;
+	for (std::string_view elem : elems) {
+		arr.add(decodeImpl(util::strip(elem)));
 	}
 	return arr;
 }
 
-Node* JsonDecoder::decodeObj(std::string_view v) {
+Node JsonDecoder::decodeObj(std::string_view v) {
 	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
-	ObjNode* obj = new ObjNode();
-	Node* valNode = nullptr;
-	try {
-		size_t i = 0;
-		for (std::string_view elem : elems) {
-			auto pair = util::smartSplit(util::strip(std::string_view{ elem.data(), elem.size() }), ':');
-			if (pair.size() != 2) {
-				throw std::runtime_error("invalid object node");
-			}
-			if (pair[0].front() != '"' || pair[0].back() != '"') {
-				throw std::runtime_error("invalid object node");
-			}
-			if (!check::isStr(pair[0])) {
-				throw std::runtime_error("invalid object node");
-			}
-			valNode = decodeImpl(util::strip(pair[1]));
-			obj->add(std::string(pair[0].data() + 1, pair[0].size() - 2), valNode);
+	ObjNode obj;
+	size_t i = 0;
+	for (std::string_view elem : elems) {
+		auto pair = util::smartSplit(util::strip(std::string_view{ elem.data(), elem.size() }), ':');
+		if (pair.size() != 2) {
+			throw std::runtime_error("invalid object node");
 		}
-	}
-	catch (std::exception& ex) {
-		delete obj;
-		if (valNode) delete valNode;
-		throw ex;
+		if (pair[0].front() != '"' || pair[0].back() != '"') {
+			throw std::runtime_error("invalid object node");
+		}
+		if (!check::isStr(pair[0])) {
+			throw std::runtime_error("invalid object node");
+		}
+		Node valNode = decodeImpl(util::strip(pair[1]));
+		obj.add(std::string(pair[0].data() + 1, pair[0].size() - 2), valNode);
 	}
 	return obj;
 }
@@ -474,35 +470,39 @@ std::string JsonEncoder::encode(const Json& json) {
 		return "";
 	}
 	std::string res;
-	Node* node = json.root;
+	const Node& node = json.root.value();
 	encodeImpl(res, node);
 	return res;
 }
 
-void JsonEncoder::encodeImpl(std::string& res, Node* node) {
-	switch (node->type) {
-	case Node::Type::Null:
-		encodeNull(res);
-		break;
-	case Node::Type::Bool:
-		encodeBool(res, node);
-		break;
-	case Node::Type::Int:
-		encodeInt(res, node);
-		break;
-	case Node::Type::Float:
-		encodeFloat(res, node);
-		break;
-	case Node::Type::String:
-		encodeStr(res, node);
-		break;
-	case Node::Type::Array:
-		encodeArray(res, node);
-		break;
-	case Node::Type::Object:
-		encodeObj(res, node);
-		break;
-	default:
+void JsonEncoder::encodeImpl(std::string& res, const Node& node) {
+	if (std::holds_alternative<ValNode>(node)) {
+		const ValNode& vnode = std::get<ValNode>(node);
+		switch (vnode.type()) {
+		case NodeType::Null:
+			encodeNull(res);
+			break;
+		case NodeType::Bool:
+			encodeBool(res, vnode);
+			break;
+		case NodeType::Int:
+			encodeInt(res, vnode);
+			break;
+		case NodeType::Float:
+			encodeFloat(res, vnode);
+			break;
+		case NodeType::String:
+			encodeStr(res, vnode);
+			break;
+		}
+	}
+	else if (std::holds_alternative<ArrNode>(node)) {
+		encodeArray(res, std::get<ArrNode>(node));
+	}
+	else if (std::holds_alternative<ObjNode>(node)) {
+		encodeObj(res, std::get<ObjNode>(node));
+	}
+	else {
 		assert(false);
 	}
 }
@@ -511,76 +511,46 @@ void JsonEncoder::encodeNull(std::string& s) {
 	s.append("null");
 }
 
-void JsonEncoder::encodeBool(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-		bool val = ptr->as<bool>();
-		s.append(val ? "true" : "false");
-	}
-	else {
-		assert(false);
-	}
+void JsonEncoder::encodeBool(std::string& s, const ValNode& node) {
+	bool val = node.as<bool>();
+	s.append(val ? "true" : "false");
 }
 
-void JsonEncoder::encodeInt(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-		s.append(std::to_string(ptr->as<int64_t>()));
-	}
-	else {
-		assert(false);
-	}
+void JsonEncoder::encodeInt(std::string& s, const ValNode& node) {
+	s.append(std::to_string(node.as<int64_t>()));
 }
 
-void JsonEncoder::encodeFloat(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-		s.append(std::to_string(ptr->as<double>()));
-	}
-	else {
-		assert(false);
-	}
+void JsonEncoder::encodeFloat(std::string& s, const ValNode& node) {
+	s.append(std::to_string(node.as<double>()));
 }
 
-void JsonEncoder::encodeStr(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-		s.append("\"").append(ptr->as<std::string>()).append("\"");
-	}
-	else {
-		assert(false);
-	}
+void JsonEncoder::encodeStr(std::string& s, const ValNode& node) {
+	s.append("\"").append(node.as<std::string>()).append("\"");
 }
 
-void JsonEncoder::encodeArray(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ArrNode*>(node); ptr) {
-		s.append("[");
-		const auto& arrNodes = ptr->get();
-		for (size_t i = 0; i < arrNodes.size(); ++i) {
-			encodeImpl(s, arrNodes[i]);
-			if (i < (arrNodes.size() - 1)) {
-				s.append(",");
-			}
+void JsonEncoder::encodeArray(std::string& s, const ArrNode& node) {
+	s.append("[");
+	const auto& arrNodes = node.ccont();
+	for (size_t i = 0; i < arrNodes.size(); ++i) {
+		encodeImpl(s, arrNodes[i]);
+		if (i < (arrNodes.size() - 1)) {
+			s.append(",");
 		}
-		s.append("]");
 	}
-	else {
-		assert(false);
-	}
+	s.append("]");
 }
 
-void JsonEncoder::encodeObj(std::string& s, Node* node) {
-	if (auto ptr = dynamic_cast<ObjNode*>(node); ptr) {
-		s.append("{");
-		const auto& objItems = ptr->get();
-		size_t i = 0;
-		for (const auto& [key, curNode] : objItems) {
-			s.append(std::format("\"{}\":", key));
-			encodeImpl(s, curNode);
-			if (i < objItems.size() - 1) {
-				s.append(",");
-			}
-			++i;
+void JsonEncoder::encodeObj(std::string& s, const ObjNode& node) {
+	s.append("{");
+	const auto& objItems = node.ccont();
+	size_t i = 0;
+	for (const auto& [key, curNode] : objItems) {
+		s.append(std::format("\"{}\":", key));
+		encodeImpl(s, curNode);
+		if (i < objItems.size() - 1) {
+			s.append(",");
 		}
-		s.append("}");
+		++i;
 	}
-	else {
-		assert(false);
-	}
+	s.append("}");
 }

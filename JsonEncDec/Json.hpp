@@ -10,6 +10,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <format>
+#include <fstream>
 
 
 namespace json {
@@ -39,21 +40,22 @@ namespace json {
 	template <typename Cont>
 	concept StringVector = std::same_as<Cont, std::vector<std::string>> || std::same_as<Cont, std::vector<std::string_view>>;
 
-	struct Node {
-		enum class Type {
-			Int,
-			Float,
-			String,
-			Bool,
-			Null,
-			Array,
-			Object,
-			NoType
-		};
-		Node(Type type);
-		virtual ~Node();
-		Type type;
+	class ValNode;
+	class ArrNode;
+	class ObjNode;
+
+	enum class NodeType {
+		Int,
+		Float,
+		String,
+		Bool,
+		Null,
+		Array,
+		Object,
+		NoType
 	};
+
+	using Node = std::variant<ValNode, ArrNode, ObjNode>;
 
 	namespace check {
 		//bool isObj(std::string_view v);
@@ -64,11 +66,11 @@ namespace json {
 		//bool isBool(std::string_view v);
 		//bool isNull(std::string_view v);
 		bool isNumberStart(char ch);
-		Node::Type getType(std::string_view v);
-		bool isValueType(Node::Type t);
+		NodeType getType(std::string_view v);
+		bool isValueType(NodeType t);
 	}
 
-	class ValNode : public Node {
+	class ValNode {
 	public:
 		using Val = std::variant<
 			int64_t,
@@ -84,49 +86,58 @@ namespace json {
 		ValNode();
 		template<typename T>
 			requires IsOneOfVariants<T, Val>::value
-		inline T as() {
+		inline T as() const {
 			return std::get<T>(val);
 		}
+		inline NodeType type() const { return _type; }
 	private:
 		Val val;
+		NodeType _type;
 	};
 
-	class ArrNode : public Node {
+	class ArrNode {
 	public:
 		ArrNode();
-		ArrNode(std::vector<Node*>&& v);
-		~ArrNode();
-		const auto& get();
-		Node* get(size_t idx);
+		ArrNode(const std::vector<Node>& v);
+		ArrNode(std::vector<Node>&& v);
+		const std::vector<Node>& ccont() const;
+		std::vector<Node>& cont();
+		Node& get(size_t idx);
 		template<typename T>
-		std::vector<T> as();
-		void add(Node* node);
+		std::vector<T> as() const;
+		void add(const Node& node);
 		inline size_t size() const { return val.size(); }
+		inline NodeType type() const { return _type; }
 	private:
 		bool isMonotype() const;
-		std::vector<Node*> val;
+		std::vector<Node> val;
+		NodeType _type;
 	};
 
-	class ObjNode : public Node {
+	class ObjNode {
 	public:
 		ObjNode();
-		ObjNode(std::unordered_map<std::string, Node*>&& m);
-		~ObjNode();
-		const auto& get();
-		Node* get(const std::string& key);
-		void add(const std::string& key, Node* val);
+		ObjNode(const std::unordered_map<std::string, Node>& m);
+		ObjNode(std::unordered_map<std::string, Node>&& m);
+		const std::unordered_map<std::string, Node>& ccont() const;
+		std::unordered_map<std::string, Node>& cont();
+		Node& get(const std::string& key);
+		void add(const std::string& key, const Node& val);
 		std::vector<std::string> keys();
+		inline NodeType type() const { return _type; }
+
 	private:
-		std::unordered_map<std::string, Node*> val;
+		std::unordered_map<std::string, Node> val;
+		NodeType _type;
 	};
 
 	class Json {
+		friend class JsonDecoder;
+		friend class JsonEncoder;
 	public:
 		Json();
-		Json(Node* r);
-		Json(const Json&) = delete;
-		Json& operator=(const Json&) = delete;
-		~Json();
+		Json(Node& r);
+		Json(Node&& r);
 		template<typename T>
 		T as();
 		template<typename T>
@@ -140,140 +151,100 @@ namespace json {
 		std::vector<std::string> keys(const Cont& keys);
 		template<StringVector Cont>
 		size_t arrSize(const Cont& keys);
-		template<typename T>
-		bool set(const std::string& key, const T& val);
-	private:
-		friend class JsonDecoder;
-		friend class JsonEncoder;
-
-		Node* get(const std::string& key);
+		Node& get(const std::string& key);
 		template<StringVector Cont>
-		Node* get(const Cont& keys);
+		Node& get(const Cont& keys);
+		inline Node& get() { return root.value(); }
+		void dump(std::ostream& os);
+		void dump(std::ostream&& os);
+	private:
 		template<StringVector Cont >
-		Node* _getImpl(const Cont& keys);
+		Node& _getImpl(const Cont& keys);
 		template<typename T>
-		T _asImpl(Node* node);
-		std::vector<std::string> _keysImpl(Node* node);
-		size_t _arrSizeImpl(Node* node);
-		Node* root;
+		T _asImpl(Node& node);
+		std::vector<std::string> _keysImpl(Node& node);
+		size_t _arrSizeImpl(Node& node);
+		std::optional<Node> root;
 	};
 
 	template<typename T>
-	std::vector<T> ArrNode::as() {
+	std::vector<T> ArrNode::as() const {
 		std::vector<T> res;
-		for (Node* node : val) {
-			if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-				res.push_back(ptr->as<T>());
-			}
+		for (const Node& node : val) {
+			const ValNode& val = std::get<ValNode>(node);
+			res.push_back(val.as<T>());
 		}
 		return res;
 	}
 
 	template<StringVector Cont>
-	Node* Json::get(const Cont& keys) {
-		Node* node = _getImpl(keys);
-		if (!node) {
-			throw std::out_of_range("invalid keys");
-		}
+	Node& Json::get(const Cont& keys) {
+		Node& node = _getImpl(keys);
 		return node;
 	}
 
 	template<StringVector Cont>
-	Node* Json::_getImpl(const Cont& keys) {
-		Node* curNode = root;
+	Node& Json::_getImpl(const Cont& keys) {
+		Node* curNode = &(root.value());
 		for (auto& key : keys) {
-			if (curNode->type == Node::Type::Object) {
-				if (auto ptr = dynamic_cast<ObjNode*>(curNode); ptr) {
-					curNode = ptr->get(std::string(key.begin(), key.end()));
-				}
-				else {
-					assert(false);
-				}
+			if (std::holds_alternative<ObjNode>(*curNode)) {
+				curNode = &(std::get<ObjNode>(*curNode).get(std::string(key.begin(), key.end())));
 			}
-			else if (curNode->type == Node::Type::Array) {
+			else if (std::holds_alternative<ArrNode>(*curNode)) {
 				if (auto idx = util::getIdx(key); idx) {
-					if (auto ptr = dynamic_cast<ArrNode*>(curNode); ptr) {
-						curNode = ptr->get(idx.value());
-					}
-					else {
-						assert(false);
-					}
+					curNode = &(std::get<ArrNode>(*curNode).get(idx.value()));
 				}
 				else {
-					return nullptr;
+					throw std::out_of_range("couldn't get node");
 				}
 			}
 			else {
-				return nullptr;
+				throw std::out_of_range("couldn't get node");
 			}
 		}
-		return curNode;
-	}
-
-	template<typename T>
-	bool Json::set(const std::string& key, const T& val) {
-		Node* curNode = root;
-		if (key.empty() && check::isValueType(root->type)) {
-			if constexpr (IsOneOfVariants<T, ValNode::Val>::value) {
-
-			}
-		}
-		for (auto& key : keys) {
-		}
+		return *curNode;
 	}
 
 	template<typename T>
 	T Json::as() {
-		return _asImpl<T>(root);
+		return _asImpl<T>(root.value());
 	}
 
 	// limitations - '.' delimiter and '[]' indexes
 	template<typename T>
 	T Json::as(const std::string& key) {
-		Node* node = get(key);
-		if (!node) {
-			throw std::out_of_range(std::format("Invalid keys {}", key));
-		}
+		Node& node = get(key);
 		return _asImpl<T>(node);
 	}
 
 	template<typename T, StringVector Cont>
 	T Json::as(const Cont& keys) {
-		Node* node = get(keys);
-		if (!node) {
-			throw std::out_of_range("Invalid keys");
-		}
+		Node& node = get(keys);
 		return _asImpl<T>(node);
 	}
 
 	template<StringVector Cont>
 	std::vector<std::string> Json::keys(const Cont& keys) {
-		Node* node = get(keys);
+		Node& node = get(keys);
 		return _keysImpl(node);
 	}
 
 	template<StringVector Cont>
 	size_t Json::arrSize(const Cont& keys) {
-		Node* node = get(keys);
+		Node& node = get(keys);
 		return _arrSizeImpl(node);
 	}
 
 	template<typename T>
-	T Json::_asImpl(Node* node) {
+	T Json::_asImpl(Node& node) {
 		if constexpr (IsOneOfVariants<T, ValNode::Val>::value) {
-			if (auto ptr = dynamic_cast<ValNode*>(node); ptr) {
-				return ptr->as<T>();
-			}
-			else {
-				assert(false);
+			if (std::holds_alternative<ValNode>(node)) {
+				return std::get<ValNode>(node).as<T>();
 			}
 		}
 		else {
-			if (auto ptr = dynamic_cast<ArrNode*>(node); ptr) {
-				return ptr->as<typename T::value_type>();
-			}
-			else {
-				assert(false);
+			if (std::holds_alternative<ArrNode>(node)) {
+				return std::get<ArrNode>(node).as<typename T::value_type>();
 			}
 		}
 		assert(false);
@@ -284,15 +255,17 @@ namespace json {
 	public:
 		JsonDecoder();
 		Json decode(std::string_view v);
+		Json decode(std::ifstream& is);
+		Json decode(std::ifstream&& is);
 	private:
-		Node* decodeImpl(std::string_view v);
-		Node* decodeObj(std::string_view v);
-		Node* decodeArr(std::string_view v);
-		Node* decodeInt(std::string_view v);
-		Node* decodeFloat(std::string_view v);
-		Node* decodeStr(std::string_view v);
-		Node* decodeBool(std::string_view v);
-		Node* decodeNull(std::string_view v);
+		Node decodeImpl(std::string_view v);
+		Node decodeObj(std::string_view v);
+		Node decodeArr(std::string_view v);
+		Node decodeInt(std::string_view v);
+		Node decodeFloat(std::string_view v);
+		Node decodeStr(std::string_view v);
+		Node decodeBool(std::string_view v);
+		Node decodeNull(std::string_view v);
 	};
 
 	class JsonEncoder {
@@ -300,14 +273,14 @@ namespace json {
 		JsonEncoder();
 		std::string encode(const Json& json);
 	private:
-		void encodeImpl(std::string& s, Node* node);
+		void encodeImpl(std::string& s, const Node& node);
 		void encodeNull(std::string& s);
-		void encodeBool(std::string& s, Node* node);
-		void encodeInt(std::string& s, Node* node);
-		void encodeFloat(std::string& s, Node* node);
-		void encodeStr(std::string& s, Node* node);
-		void encodeArray(std::string& s, Node* node);
-		void encodeObj(std::string& s, Node* node);
+		void encodeBool(std::string& s, const ValNode& node);
+		void encodeInt(std::string& s, const ValNode& node);
+		void encodeFloat(std::string& s, const ValNode& node);
+		void encodeStr(std::string& s, const ValNode& node);
+		void encodeArray(std::string& s, const ArrNode& node);
+		void encodeObj(std::string& s, const ObjNode& node);
 	};
 
 }
