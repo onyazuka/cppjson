@@ -65,6 +65,7 @@ namespace json {
 		//bool isNull(std::string_view v);
 		bool isNumberStart(char ch);
 		Node::Type getType(std::string_view v);
+		bool isValueType(Node::Type t);
 	}
 
 	class ValNode : public Node {
@@ -139,6 +140,8 @@ namespace json {
 		std::vector<std::string> keys(const Cont& keys);
 		template<StringVector Cont>
 		size_t arrSize(const Cont& keys);
+		template<typename T>
+		bool set(const std::string& key, const T& val);
 	private:
 		friend class JsonDecoder;
 		friend class JsonEncoder;
@@ -168,7 +171,11 @@ namespace json {
 
 	template<StringVector Cont>
 	Node* Json::get(const Cont& keys) {
-		return _getImpl(keys);
+		Node* node = _getImpl(keys);
+		if (!node) {
+			throw std::out_of_range("invalid keys");
+		}
+		return node;
 	}
 
 	template<StringVector Cont>
@@ -193,14 +200,26 @@ namespace json {
 					}
 				}
 				else {
-					throw std::invalid_argument("Invalid index to array");
+					return nullptr;
 				}
 			}
 			else {
-				throw std::out_of_range("Attempt to index a value node");
+				return nullptr;
 			}
 		}
 		return curNode;
+	}
+
+	template<typename T>
+	bool Json::set(const std::string& key, const T& val) {
+		Node* curNode = root;
+		if (key.empty() && check::isValueType(root->type)) {
+			if constexpr (IsOneOfVariants<T, ValNode::Val>::value) {
+
+			}
+		}
+		for (auto& key : keys) {
+		}
 	}
 
 	template<typename T>

@@ -160,6 +160,10 @@ Node::Type check::getType(std::string_view v) {
 	}
 }
 
+bool check::isValueType(Node::Type t) {
+	return t == Node::Type::Bool || t == Node::Type::Null || t == Node::Type::Int || t == Node::Type::Float || t == Node::Type::String;
+}
+
 Node::~Node() {
 	;
 }
@@ -338,7 +342,11 @@ size_t Json::_arrSizeImpl(Node* node) {
 }
 
 Node* Json::get(const std::string& key) {
-	return _getImpl(util::split(key, "."));
+	Node* node = _getImpl(util::split(key, "."));
+	if (!node) {
+		throw std::out_of_range(std::format("invalid keys: {}", key));
+	}
+	return node;
 }
 
 JsonDecoder::JsonDecoder() {
