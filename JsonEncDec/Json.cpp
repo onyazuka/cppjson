@@ -222,14 +222,6 @@ std::vector<Node>& ArrNode::cont() {
 	return val;
 }
 
-Node& ArrNode::get(size_t idx) {
-	return val.at(idx);
-}
-
-void ArrNode::add(const Node& node) {
-	val.push_back(node);
-}
-
 bool ArrNode::isMonotype() const {
 	if (val.size() == 0) return true;
 	NodeType t0 = std::get<ValNode>(val[0]).type();
@@ -264,15 +256,7 @@ std::unordered_map<std::string, Node>& ObjNode::cont() {
 	return val;
 }
 
-Node& ObjNode::get(const std::string& key) {
-	return val.at(key);
-}
-
-void ObjNode::add(const std::string& key, const Node& node) {
-	val[key] = node;
-}
-
-std::vector<std::string> ObjNode::keys() {
+std::vector<std::string> ObjNode::keys() const {
 	std::vector<std::string> res;
 	for (const auto& [key, v] : val) {
 		res.push_back(key);
@@ -304,7 +288,7 @@ bool Json::empty() const {
 
 // getting keys of object nodes
 std::vector<std::string> Json::keys(const std::string& key) {
-	Node& node = get(key);
+	const Node& node = get(key);
 	return _keysImpl(node);
 }
 
@@ -313,7 +297,7 @@ size_t Json::arrSize(const std::string& key) {
 	return _arrSizeImpl(node);
 }
 
-std::vector<std::string> Json::_keysImpl(Node& node) {
+std::vector<std::string> Json::_keysImpl(const Node& node) const {
 	if (std::holds_alternative<ObjNode>(node)) {
 		return std::get<ObjNode>(node).keys();
 	}
@@ -334,8 +318,7 @@ size_t Json::_arrSizeImpl(Node& node) {
 }
 
 Node& Json::get(const std::string& key) {
-	Node& node = _getImpl(util::split(key, "."));
-	return node;
+	return _getImpl(util::split(key, "."));
 }
 
 JsonDecoder::JsonDecoder() {
@@ -427,7 +410,7 @@ Node JsonDecoder::decodeArr(std::string_view v) {
 	ArrNode arr;
 	arr.cont().reserve(elems.size());
 	for (std::string_view elem : elems) {
-		arr.add(decodeImpl(util::strip(elem)));
+		arr.cont().push_back(decodeImpl(util::strip(elem)));
 	}
 	return arr;
 }
@@ -449,7 +432,7 @@ Node JsonDecoder::decodeObj(std::string_view v) {
 			throw std::runtime_error("invalid object node");
 		}
 		Node valNode = decodeImpl(util::strip(pair[1]));
-		obj.add(std::string(pair[0].data() + 1, pair[0].size() - 2), valNode);
+		obj.cont()[std::string(pair[0].data() + 1, pair[0].size() - 2)] = valNode;
 	}
 	return obj;
 }

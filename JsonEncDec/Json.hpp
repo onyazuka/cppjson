@@ -127,10 +127,8 @@ namespace json {
 		ArrNode(std::vector<Node>&& v);
 		const std::vector<Node>& ccont() const;
 		std::vector<Node>& cont();
-		Node& get(size_t idx);
 		template<typename T>
 		std::vector<T> as() const;
-		void add(const Node& node);
 		inline size_t size() const { return val.size(); }
 		inline NodeType type() const { return _type; }
 	private:
@@ -146,9 +144,7 @@ namespace json {
 		ObjNode(std::unordered_map<std::string, Node>&& m);
 		const std::unordered_map<std::string, Node>& ccont() const;
 		std::unordered_map<std::string, Node>& cont();
-		Node& get(const std::string& key);
-		void add(const std::string& key, const Node& val);
-		std::vector<std::string> keys();
+		std::vector<std::string> keys() const;
 		inline NodeType type() const { return _type; }
 
 	private:
@@ -163,19 +159,24 @@ namespace json {
 		Json();
 		Json(Node& r);
 		Json(Node&& r);
+
 		template<typename T>
 		T as();
 		template<typename T>
 		T as(const std::string& key);
 		template<typename T, StringVector Cont>
 		T as(const Cont& keys);
+
 		bool empty() const;
+
 		std::vector<std::string> keys(const std::string& key);
-		size_t arrSize(const std::string& key);
 		template<StringVector Cont>
 		std::vector<std::string> keys(const Cont& keys);
+
+		size_t arrSize(const std::string& key);
 		template<StringVector Cont>
 		size_t arrSize(const Cont& keys);
+
 		Node& get(const std::string& key);
 		template<StringVector Cont>
 		Node& get(const Cont& keys);
@@ -185,7 +186,7 @@ namespace json {
 		Node& _getImpl(const Cont& keys);
 		template<typename T>
 		T _asImpl(Node& node);
-		std::vector<std::string> _keysImpl(Node& node);
+		std::vector<std::string> _keysImpl(const Node& node) const;
 		size_t _arrSizeImpl(Node& node);
 		std::optional<Node> root;
 	};
@@ -202,8 +203,7 @@ namespace json {
 
 	template<StringVector Cont>
 	Node& Json::get(const Cont& keys) {
-		Node& node = _getImpl(keys);
-		return node;
+		return  _getImpl(keys);
 	}
 
 	template<StringVector Cont>
@@ -211,11 +211,11 @@ namespace json {
 		Node* curNode = &(root.value());
 		for (auto& key : keys) {
 			if (std::holds_alternative<ObjNode>(*curNode)) {
-				curNode = &(std::get<ObjNode>(*curNode).get(std::string(key.begin(), key.end())));
+				curNode = &(std::get<ObjNode>(*curNode).cont().at(std::string(key.begin(), key.end())));
 			}
 			else if (std::holds_alternative<ArrNode>(*curNode)) {
 				if (auto idx = util::getIdx(key); idx) {
-					curNode = &(std::get<ArrNode>(*curNode).get(idx.value()));
+					curNode = &(std::get<ArrNode>(*curNode).cont().at(idx.value()));
 				}
 				else {
 					throw std::out_of_range("couldn't get node");
@@ -248,7 +248,7 @@ namespace json {
 
 	template<StringVector Cont>
 	std::vector<std::string> Json::keys(const Cont& keys) {
-		Node& node = get(keys);
+		const Node& node = get(keys);
 		return _keysImpl(node);
 	}
 

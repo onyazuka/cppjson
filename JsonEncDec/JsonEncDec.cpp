@@ -188,21 +188,6 @@ void testJsonDecode() {
 
 int main()
 {
-	ValNode i((int64_t)10); 
-	ValNode s(std::string("neko"));
-	ArrNode arr({ ValNode((int64_t)15), ValNode((int64_t)20) , ValNode((int64_t)25) });
-	ObjNode obj({
-		{ "pim", ValNode((double)3.2) },
-		{ "bim", ValNode(std::string("888"))},
-		{"vim",
-			ArrNode({
-				ValNode((int64_t)1), ValNode((int64_t)2) , ValNode((int64_t)3)
-			})
-		} });
-
-	ValNode b((bool)true);
-	ValNode n;
-
 	/*
 		{
 			"1": 10,
@@ -217,12 +202,19 @@ int main()
 	*/
 
 	Node root = ObjNode({
-		{"1", i},
-		{"2", s},
-		{"3", arr},
-		{"4", obj},
-		{"5", b},
-		{"6", n}
+		{"1", 10},
+		{"2", "neko"},
+		{"3", ArrNode({ 15, 20, 25 })},
+		{"4", ObjNode({
+			{ "pim", 3.2 },
+			{ "bim", "888" },
+			{ "vim",
+				ArrNode({
+					1, 2, 3
+				})
+			} })},
+		{"5", true},
+		{"6", {}}
 		});
 
 	Json json(root);
