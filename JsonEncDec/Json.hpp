@@ -12,6 +12,7 @@
 #include <format>
 #include <fstream>
 #include "Utils_String.hpp"
+#include "Utils_Traits.hpp"
 
 
 namespace json {
@@ -24,17 +25,6 @@ namespace json {
 		std::vector<std::string_view> smartSplit(std::string_view v, char delim);
 		std::optional<size_t> getIdx(std::string_view v);
 	}
-
-	template<typename T, typename Args>
-	struct IsOneOfVariants : std::false_type {
-
-	};
-
-	template<typename T, typename...Args>
-		requires (std::same_as<T, Args> || ...)
-	struct IsOneOfVariants<T, std::variant<Args...>> : std::true_type {
-
-	};
 
 	template <typename Cont>
 	concept StringVector = std::same_as<Cont, std::vector<std::string>> || std::same_as<Cont, std::vector<std::string_view>>;
@@ -93,7 +83,7 @@ namespace json {
 		ValNode(bool b);
 		ValNode();
 		template<typename T>
-			requires IsOneOfVariants<T, Val>::value
+			requires util::traits::IsOneOfVariants<T, Val>::value
 		inline T as() const {
 			return std::get<T>(val);
 		}
@@ -259,7 +249,7 @@ namespace json {
 
 	template<typename T>
 	T Json::_asImpl(Node& node) {
-		if constexpr (IsOneOfVariants<T, ValNode::Val>::value) {
+		if constexpr (util::traits::IsOneOfVariants<T, ValNode::Val>::value) {
 			if (std::holds_alternative<ValNode>(node)) {
 				return std::get<ValNode>(node).as<T>();
 			}
