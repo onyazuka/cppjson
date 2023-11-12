@@ -6,39 +6,13 @@
 #include <format>
 #include <sstream>
 
+using namespace util::string;
 using namespace json;
 
 static constexpr char Spaces[] = "\t\n\r ";
 
-std::string_view util::strip(std::string_view v) {
-	auto p1 = v.find_first_not_of(Spaces);
-	auto p2 = v.find_last_not_of(Spaces);
-	if (p1 == std::string_view::npos) {
-		return {};
-	}
-	return v.substr(p1, p2 ? p2 - p1 + 1 : v.npos);
-}
-
-std::vector<std::string_view> util::split(std::string_view v, const std::string& delim) {
-	if (v.empty()) return {};
-	size_t pos = 0;
-	std::vector<std::string_view> res;
-	do {
-		size_t newPos = v.find(delim, pos);
-		if (newPos != std::string_view::npos) {
-			res.push_back(v.substr(pos, newPos - pos));
-			newPos += delim.size();
-		}
-		else {
-			res.push_back(v.substr(pos));
-		}
-		pos = newPos;
-	} while (pos != std::string_view::npos);
-	return res;
-}
-
 // not counts 'instring' characters, it means if 'delim' is inside a string, it will be no split here
-std::vector<std::string_view> util::smartSplit(std::string_view v, char delim) {
+std::vector<std::string_view> utils::smartSplit(std::string_view v, char delim) {
 	// not supported characters
 	assert(delim != '"' && delim != '\\');
 	bool insideString = false;
@@ -98,7 +72,7 @@ std::vector<std::string_view> util::smartSplit(std::string_view v, char delim) {
 	return res;
 }
 
-std::optional<size_t> util::getIdx(std::string_view v) {
+std::optional<size_t> utils::getIdx(std::string_view v) {
 	size_t pos1 = v.find_last_of("[");
 	size_t pos2 = v.find_last_of("]");
 	if ((pos1 != v.npos) && (pos2 != v.npos) && ((pos1 + 1) < pos2)) {
@@ -318,7 +292,7 @@ size_t Json::_arrSizeImpl(Node& node) {
 }
 
 Node& Json::get(const std::string& key) {
-	return _getImpl(util::split(key, "."));
+	return _getImpl(split(key, "."));
 }
 
 JsonDecoder::JsonDecoder() {
@@ -343,7 +317,7 @@ Json JsonDecoder::decode(std::ifstream&& is) {
 }
 
 Node JsonDecoder::decodeImpl(std::string_view v) {
-	std::string_view body = util::strip(v);
+	std::string_view body = strip(v);
 	NodeType type = check::getType(body);
 	switch (type) {
 	case NodeType::Object:
@@ -406,22 +380,22 @@ Node JsonDecoder::decodeStr(std::string_view v) {
 }
 
 Node JsonDecoder::decodeArr(std::string_view v) {
-	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
+	auto elems = utils::smartSplit(strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
 	ArrNode arr;
 	arr.cont().reserve(elems.size());
 	for (std::string_view elem : elems) {
-		arr.cont().push_back(decodeImpl(util::strip(elem)));
+		arr.cont().push_back(decodeImpl(strip(elem)));
 	}
 	return arr;
 }
 
 Node JsonDecoder::decodeObj(std::string_view v) {
-	auto elems = util::smartSplit(util::strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
+	auto elems = utils::smartSplit(strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
 	ObjNode obj;
 	obj.cont().reserve(elems.size());
 	size_t i = 0;
 	for (std::string_view elem : elems) {
-		auto pair = util::smartSplit(util::strip(std::string_view{ elem.data(), elem.size() }), ':');
+		auto pair = utils::smartSplit(strip(std::string_view{ elem.data(), elem.size() }), ':');
 		if (pair.size() != 2) {
 			throw std::runtime_error("invalid object node");
 		}
@@ -431,7 +405,7 @@ Node JsonDecoder::decodeObj(std::string_view v) {
 		if (!check::isStr(pair[0])) {
 			throw std::runtime_error("invalid object node");
 		}
-		Node valNode = decodeImpl(util::strip(pair[1]));
+		Node valNode = decodeImpl(strip(pair[1]));
 		obj.cont()[std::string(pair[0].data() + 1, pair[0].size() - 2)] = valNode;
 	}
 	return obj;

@@ -240,11 +240,11 @@ int main()
 	std::string str4 = "\"ne,ko\"";
 	std::string str5 = ",";
 
-	auto v1 = util::smartSplit(str1, ',');
-	auto v2 = util::smartSplit(str2, ',');
-	auto v3 = util::smartSplit(str3, ',');
-	auto v4 = util::smartSplit(str4, ',');
-	auto v5 = util::smartSplit(str5, ',');
+	auto v1 = utils::smartSplit(str1, ',');
+	auto v2 = utils::smartSplit(str2, ',');
+	auto v3 = utils::smartSplit(str3, ',');
+	auto v4 = utils::smartSplit(str4, ',');
+	auto v5 = utils::smartSplit(str5, ',');
 
 	for (const auto& key : json.keys("4")) {
 		std::cout << key << ", ";

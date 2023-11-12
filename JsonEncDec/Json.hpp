@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <format>
 #include <fstream>
+#include "Utils_String.hpp"
 
 
 namespace json {
@@ -19,9 +20,7 @@ namespace json {
 
 	};
 
-	namespace util {
-		std::string_view strip(std::string_view v);
-		std::vector<std::string_view> split(std::string_view v, const std::string& delim);
+	namespace utils {
 		std::vector<std::string_view> smartSplit(std::string_view v, char delim);
 		std::optional<size_t> getIdx(std::string_view v);
 	}
@@ -214,7 +213,7 @@ namespace json {
 				curNode = &(std::get<ObjNode>(*curNode).cont().at(std::string(key.begin(), key.end())));
 			}
 			else if (std::holds_alternative<ArrNode>(*curNode)) {
-				if (auto idx = util::getIdx(key); idx) {
+				if (auto idx = utils::getIdx(key); idx) {
 					curNode = &(std::get<ArrNode>(*curNode).cont().at(idx.value()));
 				}
 				else {
