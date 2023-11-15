@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JsonEncDec", "JsonEncDec\JsonEncDec.vcxproj", "{054BD5C0-C041-4C37-86BD-B5844DE39322}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpputils_web", "cpputils_web\cpputils_web.vcxproj", "{054BD5C0-C041-4C37-86BD-B5844DE39322}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpputils", "cpputils\cpputils.vcxitems", "{F22D2890-D1B9-4E87-9903-44945D195DFD}"
 EndProject

@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{054bd5c0-c041-4c37-86bd-b5844de39322}</ProjectGuid>
-    <RootNamespace>JsonEncDec</RootNamespace>
+    <RootNamespace>cpputils_web</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -130,11 +130,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="JsonEncDec.cpp" />
-    <ClCompile Include="Json.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="source\Http.cpp" />
+    <ClCompile Include="source\Json.cpp" />
+    <ClCompile Include="test\testHttp.cpp" />
+    <ClCompile Include="test\testJson.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Json.hpp" />
+    <ClInclude Include="include\Http.hpp" />
+    <ClInclude Include="include\Json.hpp" />
+    <ClInclude Include="test\testHttp.hpp" />
+    <ClInclude Include="test\testJson.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

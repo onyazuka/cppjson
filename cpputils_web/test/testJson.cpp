@@ -1,19 +1,7 @@
-#include <iostream>
-#include <format>
-#include <chrono>
-#include <fstream>
-#include "Json.hpp"
+#include "testJson.hpp"
 
 using namespace std;
-using namespace json;
-
-using Term = std::variant<
-	int64_t,
-	double,
-	std::string
->;
-
-using Arr = std::vector<Term>;
+using namespace util::web::json;
 
 void testJsonDecode() {
 	cout << format("{:-^40}\n", "Testing json decoding");
@@ -185,9 +173,8 @@ void testJsonDecode() {
 	return;
 }
 
-
-int main()
-{
+void test::testJsonMain() {
+	cout << "----------------------TESTING JSON-----------------------\n";
 	/*
 		{
 			"1": 10,
@@ -231,7 +218,7 @@ int main()
 	cout << json.as<int64_t>(std::vector<std::string_view>{ "4", "vim", "[1]" }) << endl;
 	cout << json.as<int64_t>(std::vector<std::string>{ "4", "vim", "[1]" }) << endl;
 	cout << json.as<bool>("5") << endl;
-	
+
 	auto vvv = json.as<Null>("6");
 
 	std::string str1 = "1,2,3";
@@ -270,12 +257,9 @@ int main()
 	std::get<ArrNode>(json2.get("3")).cont().push_back(ValNode(11.2));
 	JsonEncoder().dump(json2, std::cout);
 	std::cout << JsonEncoder({ true }).encode(json2) << endl;
-	JsonEncoder({true}).dump(json2, std::ofstream("f:/1.json"));
+	JsonEncoder({ true }).dump(json2, std::ofstream("f:/1.json"));
 	Json json3 = JsonDecoder().decode(std::ifstream("f:/1.json"));
 	JsonEncoder().dump(json3, std::cout);
 
 	ValNode vvvvv("1.1");
-
-	return 0;
 }
-

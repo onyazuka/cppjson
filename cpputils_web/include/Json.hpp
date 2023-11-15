@@ -15,7 +15,7 @@
 #include "Utils_Traits.hpp"
 
 
-namespace json {
+namespace util::web::json {
 
 	struct Null {
 
