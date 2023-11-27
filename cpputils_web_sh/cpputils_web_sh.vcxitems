@@ -14,15 +14,15 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\include\Http.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\include\Json.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testHttp.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testJson.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\Http.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\Json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)test\testHttp.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)test\testJson.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\source\Http.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\source\Json.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testHttp.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testJson.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)source\Http.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)source\Json.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)test\testHttp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)test\testJson.cpp" />
   </ItemGroup>
 </Project>
