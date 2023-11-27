@@ -57,6 +57,7 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
     <Import Project="..\cpputils\cpputils.vcxitems" Label="Shared" />
+    <Import Project="..\cpputils_web_sh\cpputils_web_sh.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -131,14 +132,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="source\Http.cpp" />
-    <ClCompile Include="source\Json.cpp" />
     <ClCompile Include="test\testHttp.cpp" />
     <ClCompile Include="test\testJson.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Http.hpp" />
-    <ClInclude Include="include\Json.hpp" />
     <ClInclude Include="test\testHttp.hpp" />
     <ClInclude Include="test\testJson.hpp" />
   </ItemGroup>
