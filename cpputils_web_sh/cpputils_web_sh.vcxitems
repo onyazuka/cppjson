@@ -16,9 +16,13 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\include\Http.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\include\Json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testHttp.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testJson.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\source\Http.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\source\Json.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testHttp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\cpputils_web\test\testJson.cpp" />
   </ItemGroup>
 </Project>

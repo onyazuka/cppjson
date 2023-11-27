@@ -132,12 +132,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="test\testHttp.cpp" />
-    <ClCompile Include="test\testJson.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="test\testHttp.hpp" />
-    <ClInclude Include="test\testJson.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
