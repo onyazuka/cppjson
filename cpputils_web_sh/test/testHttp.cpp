@@ -16,4 +16,8 @@ void util::web::http::test::testHttpMain() {
     hp1.headers()["USER-AGENT"] = "ME";
     hp1.message().url = "/baka";
     hp1.body() = "<h1>Hello world</h1>";
+
+    cout << hp1.message().encode() << endl << "-----------------" << endl;
+    cout << hp2.message().encode() << endl << "-----------------" << endl;
+    cout << hp3.message().encode() << endl << "-----------------" << endl;
 }

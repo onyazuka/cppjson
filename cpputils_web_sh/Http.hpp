@@ -57,15 +57,25 @@ namespace util::web::http {
 	}
 
 	struct HttpRequest {
+		HttpRequest();
+		HttpRequest(Method method, const std::string& url, const std::string& version, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "");
+		std::string encode() const;
 		Method method = Method::GET;
 		std::string url;
 		std::string version;
+		std::unordered_map<std::string, std::string> headers;
+		std::string body;
 	};
 
 	struct HttpResponse {
+		HttpResponse();
+		HttpResponse(const std::string& version, size_t status, const std::string& statusText, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "");
+		std::string encode() const;
 		std::string version;
 		size_t status = 0;
 		std::string statusText;
+		std::unordered_map<std::string, std::string> headers;
+		std::string body;
 	};
 
 	template<typename T>
@@ -78,23 +88,21 @@ namespace util::web::http {
 		HttpMessage& message();
 		const HttpMessage& message() const;
 
-		inline const auto& headers() const { return _headers; }
-		inline auto& headers() { return _headers; }
-		inline const auto& body() const { return _body; }
-		inline auto& body() { return _body; }
+		inline const auto& headers() const { return msg.headers; }
+		inline auto& headers() { return msg.headers; }
+		inline const auto& body() const { return msg.body; }
+		inline auto& body() { return msg.body; }
 
 	private:
 		bool parse(std::string_view s);
 		bool parseFirstLine(std::string_view s);
 		bool parseHeader(std::string_view line);
 
-		HttpMessage _msg;
-		std::unordered_map<std::string, std::string> _headers;
-		std::string _body;
+		HttpMessage msg;
 	};
 
-	template<CHttpMessage HttpMessage>
-	HttpParser<HttpMessage>::HttpParser(const std::string& s) {
+	template<CHttpMessage HttpMessageStart>
+	HttpParser<HttpMessageStart>::HttpParser(const std::string& s) {
 		if (s.empty()) {
 			throw std::invalid_argument("http: empty string has been passed");
 		}
@@ -105,12 +113,12 @@ namespace util::web::http {
 
 	template<CHttpMessage HttpMessage>
 	HttpMessage& HttpParser<HttpMessage>::message() {
-		return _msg;
+		return msg;
 	}
 
 	template<CHttpMessage HttpMessage>
 	const HttpMessage& HttpParser<HttpMessage>::message() const {
-		return _msg;
+		return msg;
 	}
 
 	template<CHttpMessage HttpMessage>
@@ -135,7 +143,7 @@ namespace util::web::http {
 			}
 			// body
 			else if (emptyFound) {
-				_body = std::string(line.data(), s.data() + s.size());
+				msg.body = std::string(line.data(), s.data() + s.size());
 				break;
 			}
 			// header
@@ -158,11 +166,11 @@ namespace util::web::http {
 		if constexpr (std::is_same_v<HttpMessage, HttpRequest>) {
 			std::string method = v2str(parts[0]);
 			std::transform(method.begin(), method.end(), method.begin(), std::toupper);
-			_msg = HttpRequest{ strToMethod(method), v2str(parts[1]), v2str(parts[2]) };
+			msg = HttpRequest{ strToMethod(method), v2str(parts[1]), v2str(parts[2]) };
 		}
 		// response
 		else {
-			_msg = HttpResponse(v2str(parts[0]), std::stoull(v2str(parts[1])), v2str(parts[2]));
+			msg = HttpResponse(v2str(parts[0]), std::stoull(v2str(parts[1])), v2str(parts[2]));
 		}
 		return true;
 	}
@@ -178,7 +186,7 @@ namespace util::web::http {
 		std::string_view vval = line.substr(pos + 1);
 		std::string key = v2str(strip(vkey));
 		std::transform(key.begin(), key.end(), key.begin(), std::toupper);
-		_headers[std::move(key)] = v2str(strip(vval));
+		msg.headers[std::move(key)] = v2str(strip(vval));
 		return true;
 	}
 }
