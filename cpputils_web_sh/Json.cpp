@@ -393,7 +393,6 @@ Node JsonDecoder::decodeObj(std::string_view v) {
 	auto elems = utils::smartSplit(strip(std::string_view{v.data() + 1, v.size() - 2}), ',');
 	ObjNode obj;
 	obj.cont().reserve(elems.size());
-	size_t i = 0;
 	for (std::string_view elem : elems) {
 		auto pair = utils::smartSplit(strip(std::string_view{ elem.data(), elem.size() }), ':');
 		if (pair.size() != 2) {
@@ -454,6 +453,8 @@ void JsonEncoder::encodeImpl(std::string& res, const Node& node) {
 			break;
 		case NodeType::String:
 			encodeStr(res, vnode);
+			break;
+		default:
 			break;
 		}
 	}

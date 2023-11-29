@@ -28,7 +28,7 @@ namespace util::web::http {
 	template<typename Str>
 		requires (std::is_same_v<Str, std::string> || std::is_same_v<Str, std::string&>)
 	Method strToMethod(Str s) {
-		std::transform(s.begin(), s.end(), s.begin(), std::toupper);
+		std::transform(s.begin(), s.end(), s.begin(), ::toupper);
 		if (s == "OPTIONS") {
 			return Method::OPTIONS;
 		}
@@ -165,7 +165,7 @@ namespace util::web::http {
 		}
 		if constexpr (std::is_same_v<HttpMessage, HttpRequest>) {
 			std::string method = v2str(parts[0]);
-			std::transform(method.begin(), method.end(), method.begin(), std::toupper);
+			std::transform(method.begin(), method.end(), method.begin(), ::toupper);
 			msg = HttpRequest{ strToMethod(method), v2str(parts[1]), v2str(parts[2]) };
 		}
 		// response
@@ -185,7 +185,7 @@ namespace util::web::http {
 		std::string_view vkey = line.substr(0, pos);
 		std::string_view vval = line.substr(pos + 1);
 		std::string key = v2str(strip(vkey));
-		std::transform(key.begin(), key.end(), key.begin(), std::toupper);
+		std::transform(key.begin(), key.end(), key.begin(), ::toupper);
 		msg.headers[std::move(key)] = v2str(strip(vval));
 		return true;
 	}

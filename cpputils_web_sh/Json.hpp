@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <format>
 #include <fstream>
+#include <cstdint>
 #include "Utils_String.hpp"
 #include "Utils_Traits.hpp"
 
