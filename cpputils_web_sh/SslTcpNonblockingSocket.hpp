@@ -46,6 +46,7 @@ namespace inet {
 		mutable SSL* ssl = nullptr;
 		static char errBuf[256];
 		mutable std::pair<Error, int> lastErr = { Error::NoError, 0 };
+		bool sslAcceptFinished = false;
 	};
 
 }

@@ -1,6 +1,7 @@
 #include "SslTcpNonblockingSocket.hpp"
 #include <format>
 #include <iostream>
+#include <thread>
 
 using namespace inet;
 
@@ -8,8 +9,8 @@ char SslTcpNonblockingSocket::errBuf[256];
 SslTcpNonblockingSocket::SslCtx SslTcpNonblockingSocket::ctx;
 
 SslTcpNonblockingSocket::SslCtx::SslCtx() {
-    static constexpr char CertPath[] = "/opt/chat/crt.crt";
-    static constexpr char KeyPath[] = "/opt/chat/key.key";
+    static constexpr char CertPath[] = "/opt/chat/tls.crt";
+    static constexpr char KeyPath[] = "/opt/chat/tls.key";
 
     const SSL_METHOD* method;
 
@@ -70,10 +71,12 @@ std::pair<ssize_t, std::shared_ptr<ISocket>> SslTcpNonblockingSocket::accept() c
         }
         else if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)  {
             //std::cout << SSL_state_string_long(clientSsl) << std::endl;
-            continue;
+           // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+           // continue;
+            return { -EAGAIN, std::shared_ptr<ISocket>(new SslTcpNonblockingSocket(client, clientSsl)) };
         }
         else if (status <= 0) {
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             //std::cout << SSL_state_string_long(clientSsl) << std::endl;
             lastErr = { Error::AcceptFail, SSL_get_error(clientSsl, err) };
             return { -EINVAL, nullptr };

@@ -8,9 +8,12 @@
 #include <variant>
 #include <type_traits>
 #include <cassert>
+#include <format>
 #include "Utils_String.hpp"
 
 namespace util::web::http {
+
+	std::string HttpStatusToStr(size_t code);
 
 	enum class Method {
 		OPTIONS,
@@ -19,7 +22,9 @@ namespace util::web::http {
 		PUT,
 		POST,
 		DELETE,
-		PATCH
+		PATCH,
+		CONNECT,
+		TRACE
 	};
 
 	std::string methodToStr(Method m);
@@ -50,10 +55,51 @@ namespace util::web::http {
 		else if (s == "PATCH") {
 			return Method::PATCH;
 		}
+		else if (s == "CONNECT") {
+			return Method::CONNECT;
+		}
+		else if (s == "TRACE") {
+			return Method::TRACE;
+		}
 		else {
 			assert(false);
 		}
 		return Method::GET;
+	}
+
+	template<typename T>
+	concept Formattable = requires (T) {
+		typename std::formatter<T>;
+	};
+
+	class HttpHeaders {
+	public:
+		HttpHeaders();
+		HttpHeaders(const std::unordered_map<std::string, std::string>& _map);
+		HttpHeaders(std::unordered_map<std::string, std::string>&& _map);
+		inline std::unordered_map<std::string, std::string>& get() { return headers; }
+		inline const std::unordered_map<std::string, std::string>& get() const { return headers; }
+		std::string find(const std::string& key) const;
+		void add(const std::string& key, const std::string& val);
+		void remove(const std::string& key);
+		void borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal = "");
+		void clear();
+		template<Formattable T>
+		void add(const std::string& key, const T& val);
+		template<Formattable T>
+		void add(const std::string& key, T&& val);
+	private:
+		std::unordered_map<std::string, std::string> headers;
+	};
+
+	template<Formattable T>
+	void HttpHeaders::add(const std::string& key, const T& val) {
+		headers[key] = std::format("{}", val);
+	}
+
+	template<Formattable T>
+	void HttpHeaders::add(const std::string& key, T&& val) {
+		headers[key] = std::format("{}", val);
 	}
 
 	struct HttpRequest {
@@ -63,19 +109,30 @@ namespace util::web::http {
 		Method method = Method::GET;
 		std::string url;
 		std::string version;
-		std::unordered_map<std::string, std::string> headers;
+		HttpHeaders headers;
 		std::string body;
 	};
 
 	struct HttpResponse {
 		HttpResponse();
-		HttpResponse(const std::string& version, size_t status, const std::string& statusText, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "");
+		HttpResponse(const std::string& version, size_t status, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "", const HttpHeaders& reqHeaders = {});
+		HttpResponse(std::string&& version, size_t status, std::unordered_map<std::string, std::string>&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
+		HttpResponse(size_t status, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "", const HttpHeaders& reqHeaders = {});
+		HttpResponse(size_t status, std::unordered_map<std::string, std::string>&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
+		HttpResponse(const std::string& version, size_t status, const HttpHeaders& headers = {}, const std::string& body = "", const HttpHeaders& reqHeaders = {});
+		HttpResponse(std::string&& version, size_t status, HttpHeaders&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
+		HttpResponse(size_t status, const HttpHeaders& headers = {}, const std::string& body = "", const HttpHeaders& reqHeaders = {});
+		HttpResponse(size_t status, HttpHeaders&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
+		// finishes response by auto appending headers (for example, "content-length")
+		void finish(const HttpHeaders& reqHeaders);
 		std::string encode() const;
 		std::string version;
 		size_t status = 0;
 		std::string statusText;
-		std::unordered_map<std::string, std::string> headers;
+		HttpHeaders headers;
 		std::string body;
+
+		static constexpr char Default_Http_Version[] = "HTTP/1.1";
 	};
 
 	template<typename T>
@@ -178,7 +235,7 @@ namespace util::web::http {
 		}
 		// response
 		else {
-			msg = HttpResponse(v2str(parts[0]), std::stoull(v2str(parts[1])), v2str(parts[2]));
+			msg = HttpResponse(v2str(parts[0]), std::stoull(v2str(parts[1])), HttpHeaders());
 		}
 		return true;
 	}
@@ -194,7 +251,7 @@ namespace util::web::http {
 		std::string_view vval = line.substr(pos + 1);
 		std::string key = v2str(strip(vkey));
 		std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-		msg.headers[std::move(key)] = v2str(strip(vval));
+		msg.headers.add(std::move(key), v2str(strip(vval)));
 		return true;
 	}
 }

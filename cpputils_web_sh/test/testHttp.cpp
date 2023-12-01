@@ -13,7 +13,7 @@ void util::web::http::test::testHttpMain() {
     std::string r2 = "GET /hello.htm HTTP/1.1";
     HttpParser<HttpRequest> hp3(r2);
 
-    hp1.headers()["USER-AGENT"] = "ME";
+    hp1.headers().add("USER-AGENT", "ME");
     hp1.message().url = "/baka";
     hp1.body() = "<h1>Hello world</h1>";
 
