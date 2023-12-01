@@ -84,7 +84,8 @@ namespace util::web::http {
 	template<CHttpMessage HttpMessage>
 	class HttpParser {
 	public:
-		HttpParser(const std::string& s);
+		HttpParser();
+		HttpParser(std::string_view s);
 		HttpMessage& message();
 		const HttpMessage& message() const;
 
@@ -92,17 +93,23 @@ namespace util::web::http {
 		inline auto& headers() { return msg.headers; }
 		inline const auto& body() const { return msg.body; }
 		inline auto& body() { return msg.body; }
-
-	private:
+		inline bool parsed() const { return _parsed; }
 		bool parse(std::string_view s);
+	private:
 		bool parseFirstLine(std::string_view s);
 		bool parseHeader(std::string_view line);
 
 		HttpMessage msg;
+		bool _parsed = false;
 	};
 
 	template<CHttpMessage HttpMessageStart>
-	HttpParser<HttpMessageStart>::HttpParser(const std::string& s) {
+	HttpParser<HttpMessageStart>::HttpParser() {
+		;
+	}
+
+	template<CHttpMessage HttpMessageStart>
+	HttpParser<HttpMessageStart>::HttpParser(std::string_view s) {
 		if (s.empty()) {
 			throw std::invalid_argument("http: empty string has been passed");
 		}
@@ -153,6 +160,7 @@ namespace util::web::http {
 				}
 			}
 		}
+		_parsed = true;
 		return true;
 	}
 
