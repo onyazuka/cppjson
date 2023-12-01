@@ -7,6 +7,8 @@ namespace inet {
 	public:
 		TcpNonblockingSocket(int _fd);
 		~TcpNonblockingSocket();
+		TcpNonblockingSocket(const TcpNonblockingSocket&) = delete;
+		TcpNonblockingSocket& operator=(const TcpNonblockingSocket&) = delete;
 		int init() const override;
 		std::pair<ssize_t, std::shared_ptr<ISocket>> accept() const override;
 		ssize_t read(InputSocketBuffer& buf) const override;

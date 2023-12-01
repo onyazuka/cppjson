@@ -62,12 +62,12 @@ ISocket::~ISocket() {
 std::pair<bool, std::vector<std::pair<ssize_t, std::shared_ptr<ISocket>>>> ISocket::acceptAll() const {
 	std::vector<std::pair<ssize_t, std::shared_ptr<ISocket>>> fds;
 	std::shared_ptr<ISocket> fd = 0;
-	size_t errNum;
+	ssize_t errNum;
 	bool err = false;
 	do {
 		std::tie(errNum, fd) = accept();
 		if (fd == nullptr) {
-			err = true;
+			if (errNum != -EAGAIN) err = true;
 			break;
 		}
 		fds.push_back({ errNum,fd});

@@ -9,6 +9,8 @@ namespace inet {
 	public:
 		SslTcpNonblockingSocket(std::shared_ptr<ISocket> psock, SSL* ssl);
 		~SslTcpNonblockingSocket();
+		SslTcpNonblockingSocket(const SslTcpNonblockingSocket&) = delete;
+		SslTcpNonblockingSocket& operator=(const SslTcpNonblockingSocket&) = delete;
 		int init() const override;
 		std::pair<ssize_t, std::shared_ptr<ISocket>> accept() const override;
 		ssize_t read(InputSocketBuffer& buf) const override;

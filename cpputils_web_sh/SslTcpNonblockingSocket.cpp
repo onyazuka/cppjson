@@ -1,5 +1,6 @@
 #include "SslTcpNonblockingSocket.hpp"
 #include <format>
+#include <iostream>
 
 using namespace inet;
 
@@ -62,14 +63,18 @@ std::pair<ssize_t, std::shared_ptr<ISocket>> SslTcpNonblockingSocket::accept() c
         return { -EBADFD, nullptr };
     }
     for (;;) {
-        int err = SSL_accept(clientSsl);
-        if (err > 0) {
+        int status = SSL_accept(clientSsl);
+        int err = SSL_get_error(clientSsl, status);
+        if (status > 0) {
             break;
         }
-        else if (SSL_get_error(clientSsl, err) == SSL_ERROR_WANT_READ) {
+        else if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)  {
+            //std::cout << SSL_state_string_long(clientSsl) << std::endl;
             continue;
         }
-        else if (err <= 0) {
+        else if (status <= 0) {
+            ERR_print_errors_fp(stderr);
+            //std::cout << SSL_state_string_long(clientSsl) << std::endl;
             lastErr = { Error::AcceptFail, SSL_get_error(clientSsl, err) };
             return { -EINVAL, nullptr };
         }
