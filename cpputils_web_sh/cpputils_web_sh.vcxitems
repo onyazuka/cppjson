@@ -16,12 +16,18 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Http.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Socket.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SslTcpNonblockingSocket.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TcpNonblockingSocket.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)test\testHttp.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)test\testJson.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Http.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Json.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Socket.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)SslTcpNonblockingSocket.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TcpNonblockingSocket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)test\testHttp.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)test\testJson.cpp" />
   </ItemGroup>
