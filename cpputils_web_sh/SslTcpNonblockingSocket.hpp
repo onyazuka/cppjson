@@ -21,11 +21,14 @@ namespace inet {
 			return psock->fd();
 		}
 		std::string strerr() const override;
+
+		// when using, user should correctly initialize static ssl ctx with paths to certificate and private key
 		struct SslCtx {
-			SslCtx();
+			SslCtx(const std::string& CertPath, const std::string& PrivKeyPath);
 			~SslCtx();
 			mutable SSL_CTX* sslCtx = nullptr;
 		};
+
 		inline SSL* getSsl() const { return ssl; }
 	private:
 

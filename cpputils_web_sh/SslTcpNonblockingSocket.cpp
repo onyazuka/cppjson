@@ -6,12 +6,8 @@
 using namespace inet;
 
 char SslTcpNonblockingSocket::errBuf[256];
-SslTcpNonblockingSocket::SslCtx SslTcpNonblockingSocket::ctx;
 
-SslTcpNonblockingSocket::SslCtx::SslCtx() {
-    static constexpr char CertPath[] = "/opt/chat/tls.crt";
-    static constexpr char KeyPath[] = "/opt/chat/tls.key";
-
+SslTcpNonblockingSocket::SslCtx::SslCtx(const std::string& CertPath, const std::string& PrivKeyPath) {
     const SSL_METHOD* method;
 
     method = TLS_server_method();
@@ -21,12 +17,12 @@ SslTcpNonblockingSocket::SslCtx::SslCtx() {
         throw std::runtime_error(std::format("Couldn't open ssl context: {}", ERR_error_string(ERR_get_error(), errBuf)));
     }
 
-    if (SSL_CTX_use_certificate_file(sslCtx, CertPath, SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_certificate_file(sslCtx, CertPath.data(), SSL_FILETYPE_PEM) <= 0) {
         throw std::runtime_error(std::format("Couldn't use certificate for socket: {}, certificate path is set to {}", ERR_error_string(ERR_get_error(), errBuf), CertPath));
     }
 
-    if (SSL_CTX_use_PrivateKey_file(sslCtx, KeyPath, SSL_FILETYPE_PEM) <= 0) {
-        throw std::runtime_error(std::format("Couldn't use private key for socket: {}, private key path is set to {}", ERR_error_string(ERR_get_error(), errBuf), KeyPath));
+    if (SSL_CTX_use_PrivateKey_file(sslCtx, PrivKeyPath.data(), SSL_FILETYPE_PEM) <= 0) {
+        throw std::runtime_error(std::format("Couldn't use private key for socket: {}, private key path is set to {}", ERR_error_string(ERR_get_error(), errBuf), PrivKeyPath));
     }
 }
 
