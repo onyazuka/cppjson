@@ -14,6 +14,8 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Db.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)DbMysql.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Http.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Socket.hpp" />
@@ -23,6 +25,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)test\testJson.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)DbMysql.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Http.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Json.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Socket.cpp" />
