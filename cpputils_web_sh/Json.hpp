@@ -72,8 +72,8 @@ namespace util::web::json {
 		template<typename IntT>
 			requires std::is_integral_v<IntT>
 		ValNode(IntT v);
-		// potential overflow
-		ValNode(uint64_t v) = delete;
+		// potential overflow (not a problem since correct cast from i64 to u64 and vice versa)
+		//ValNode(uint64_t v) = delete;
 		template<typename FloatT>
 			requires std::is_floating_point_v<FloatT>
 		ValNode(FloatT d);
@@ -253,6 +253,16 @@ namespace util::web::json {
 		if constexpr (util::traits::IsOneOfVariants<T, ValNode::Val>::value) {
 			if (std::holds_alternative<ValNode>(node)) {
 				return std::get<ValNode>(node).as<T>();
+			}
+		}
+		else if constexpr (std::is_integral_v<T>) {
+			if (std::holds_alternative<ValNode>(node)) {
+				return static_cast<T>(std::get<ValNode>(node).as<int64_t>());
+			}
+		}
+		else if constexpr (std::is_floating_point_v<T>) {
+			if (std::holds_alternative<ValNode>(node)) {
+				return static_cast<T>(std::get<ValNode>(node).as<double>());
 			}
 		}
 		else {
