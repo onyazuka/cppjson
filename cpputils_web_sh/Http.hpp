@@ -251,7 +251,8 @@ namespace util::web::http {
 		std::string_view vkey = line.substr(0, pos);
 		std::string_view vval = line.substr(pos + 1);
 		std::string key = v2str(strip(vkey));
-		std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+		StringTitlefier titlefier(key, { ' ', '-' });
+		std::transform(key.begin(), key.end(), key.begin(), titlefier);
 		msg.headers.add(std::move(key), v2str(strip(vval)));
 		return true;
 	}
