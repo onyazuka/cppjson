@@ -88,6 +88,7 @@ namespace util::web::http {
 		void add(const std::string& key, const T& val);
 		template<Formattable T>
 		void add(const std::string& key, T&& val);
+		std::unordered_map<std::string, std::string> cookies() const;
 	private:
 		std::unordered_map<std::string, std::string> headers;
 	};

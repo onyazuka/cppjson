@@ -130,6 +130,21 @@ void HttpHeaders::clear() {
 	headers.clear();
 }
 
+std::unordered_map<std::string, std::string> HttpHeaders::cookies() const {
+	std::unordered_map<std::string, std::string> res;
+	if (auto iter = headers.find("COOKIE"); iter != headers.end()) {
+		auto parts = util::string::split(util::string::strip(iter->second), ";");
+		for (auto part : parts) {
+			auto subparts = util::string::split(util::string::strip(part), "=");
+			if (subparts.size() != 2) {
+				continue;
+			}
+			res[util::string::v2str(subparts[0])] = util::string::v2str(subparts[1]);
+		}
+	}
+	return res;
+}
+
 HttpRequest::HttpRequest() {
 	;
 }
