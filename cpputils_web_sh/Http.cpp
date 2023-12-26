@@ -117,12 +117,12 @@ void HttpHeaders::remove(const std::string& key) {
 	headers.erase(key);
 }
 
-void HttpHeaders::borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal) {
+void HttpHeaders::borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal, const std::string& newKey) {
 	if (auto iter = other.headers.find(key); iter != other.headers.end()) {
-		add(key, iter->second);
+		add(newKey.empty() ? key : newKey, iter->second);
 	}
 	else {
-		if (!defVal.empty()) add(key, defVal);
+		if (!defVal.empty()) add(newKey.empty() ? key : newKey, defVal);
 	}
 }
 
@@ -173,54 +173,49 @@ HttpResponse::HttpResponse() {
 HttpResponse::HttpResponse(const std::string& version, size_t status, const std::unordered_map<std::string, std::string>& headers, const std::string& body, const HttpHeaders& reqHeaders)
 	: version{version}, status{status}, statusText{ HttpStatusToStr(status) }, headers{headers}, body{body}
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(std::string&& version, size_t status, std::unordered_map<std::string, std::string>&& headers, std::string&& body, HttpHeaders&& reqHeaders)
 	: version{ std::move(version) }, status{ status }, statusText{ HttpStatusToStr(status) }, headers{ std::move(headers) }, body{ std::move(body) }
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(size_t status, const std::unordered_map<std::string, std::string>& headers, const std::string& body, const HttpHeaders& reqHeaders)
 	: version{ Default_Http_Version }, status{ status }, statusText{ HttpStatusToStr(status)}, headers{headers}, body{body}
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(size_t status, std::unordered_map<std::string, std::string>&& headers, std::string&& body, HttpHeaders&& reqHeaders)
 	: version{ Default_Http_Version }, status{ status }, statusText{ HttpStatusToStr(status)}, headers{std::move(headers)}, body{std::move(body)}
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(const std::string& version, size_t status, const HttpHeaders& headers, const std::string& body, const HttpHeaders& reqHeaders)
 	: version{ version }, status{ status }, statusText{ HttpStatusToStr(status) }, headers{ headers }, body{ body }
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(std::string&& version, size_t status, HttpHeaders&& headers, std::string&& body, HttpHeaders&& reqHeaders)
 	: version{ std::move(version) }, status{ status }, statusText{ HttpStatusToStr(status) }, headers{ std::move(headers) }, body{ std::move(body) }
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(size_t status, const HttpHeaders& headers, const std::string& body, const HttpHeaders& reqHeaders)
 	: version{ Default_Http_Version }, status{ status }, statusText{ HttpStatusToStr(status) }, headers{ headers }, body{ body }
 {
-	finish(reqHeaders);
+	;
 }
 
 HttpResponse::HttpResponse(size_t status, HttpHeaders&& headers, std::string&& body, HttpHeaders&& reqHeaders)
 	: version{ Default_Http_Version }, status{ status }, statusText{ HttpStatusToStr(status) }, headers{ std::move(headers) }, body{ std::move(body) }
 {
-	finish(reqHeaders);
-}
-
-void HttpResponse::finish(const HttpHeaders& reqHeaders) {
-	headers.add("Content-Length", body.size());
-	headers.borrow(reqHeaders, "Connection");
+	;
 }
 
 std::string HttpResponse::encode() const {

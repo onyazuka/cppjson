@@ -82,7 +82,7 @@ namespace util::web::http {
 		std::string find(const std::string& key) const;
 		void add(const std::string& key, const std::string& val);
 		void remove(const std::string& key);
-		void borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal = "");
+		void borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal = "", const std::string& newKey = "");
 		void clear();
 		template<Formattable T>
 		void add(const std::string& key, const T& val);
@@ -124,8 +124,6 @@ namespace util::web::http {
 		HttpResponse(std::string&& version, size_t status, HttpHeaders&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
 		HttpResponse(size_t status, const HttpHeaders& headers = {}, const std::string& body = "", const HttpHeaders& reqHeaders = {});
 		HttpResponse(size_t status, HttpHeaders&& headers = {}, std::string&& body = "", HttpHeaders&& reqHeaders = {});
-		// finishes response by auto appending headers (for example, "content-length")
-		void finish(const HttpHeaders& reqHeaders);
 		std::string encode() const;
 		std::string version;
 		size_t status = 0;
