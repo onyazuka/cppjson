@@ -12,6 +12,7 @@
 #include <format>
 #include <fstream>
 #include <cstdint>
+#include <functional>
 #include "Utils_String.hpp"
 #include "Utils_Traits.hpp"
 
@@ -29,6 +30,11 @@ namespace util::web::json {
 
 	template <typename Cont>
 	concept StringVector = std::same_as<Cont, std::vector<std::string>> || std::same_as<Cont, std::vector<std::string_view>>;
+
+	template <typename T>
+	concept ElemToObjNodeConvertable = requires(T val) {
+		std::declval<typename T::value_type>().toObjNode();
+	};
 
 	class ValNode;
 	class ArrNode;
@@ -121,11 +127,22 @@ namespace util::web::json {
 		std::vector<T> as() const;
 		inline size_t size() const { return val.size(); }
 		inline NodeType type() const { return _type; }
+		template<typename T> requires ElemToObjNodeConvertable<T>
+		static ArrNode makeFrom(const T& cont);
 	private:
 		bool isMonotype() const;
 		std::vector<Node> val;
 		NodeType _type;
 	};
+
+	template<typename T> requires ElemToObjNodeConvertable<T>
+	ArrNode ArrNode::makeFrom(const T& cont) {
+		std::vector<Node> nodes;
+		for (const auto& elem : cont) {
+			nodes.push_back(elem.toObjNode());
+		}
+		return ArrNode(std::move(nodes));
+	}
 
 	class ObjNode {
 	public:
@@ -136,11 +153,22 @@ namespace util::web::json {
 		std::unordered_map<std::string, Node>& cont();
 		std::vector<std::string> keys() const;
 		inline NodeType type() const { return _type; }
+		template<typename T, typename F>
+		static ObjNode makeFrom(const T& cont, F extractor);
 
 	private:
 		std::unordered_map<std::string, Node> val;
 		NodeType _type;
 	};
+
+	template<typename T, typename F>
+	ObjNode ObjNode::makeFrom(const T& cont, F extractor) {
+		std::unordered_map<std::string, Node> nodes;
+		for (const auto& elem : cont) {
+			nodes.insert(extractor(elem));
+		}
+		return nodes;
+	}
 
 	class Json {
 		friend class JsonDecoder;
