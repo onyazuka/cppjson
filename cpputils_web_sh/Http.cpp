@@ -3,6 +3,7 @@
 #include <format>
 
 using namespace util::web::http;
+using namespace util::string;
 
 std::string util::web::http::HttpStatusToStr(size_t code)
 {
@@ -150,7 +151,7 @@ HttpRequest::HttpRequest() {
 }
 
 HttpRequest::HttpRequest(Method method, const std::string& url, const std::string& version, const std::unordered_map<std::string, std::string>& headers, const std::string& body)
-	: method{method}, url{url}, version{version}, headers{headers}, body{body}
+	: method{ method }, url{ url }, version{ version }, headers{ headers }, body{ body }, query{ makeUrlQuery() }
 {
 	;
 }
@@ -164,6 +165,25 @@ std::string HttpRequest::encode() const {
 	shttp.append("\r\n");
 	shttp.append(body);
 	return shttp;
+}
+
+UrlQueryT HttpRequest::makeUrlQuery() const {
+	UrlQueryT que = UrlQueryT();
+	auto vUrl = std::string_view(url);
+	auto queryBegin = vUrl.find('?');
+	if (queryBegin == vUrl.npos || (queryBegin == vUrl.size() - 1)) {
+		return que;
+	}
+	vUrl = vUrl.substr(queryBegin + 1);
+	auto params = split(vUrl, "&");
+	for (auto& param : params) {
+		auto keyVal = split(param, "=");
+		if (keyVal.size() != 2) {
+			continue;
+		}
+		que.add(v2str(keyVal[0]), v2str(keyVal[1]));
+	}
+	return que;
 }
 
 HttpResponse::HttpResponse() {

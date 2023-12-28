@@ -93,6 +93,8 @@ namespace util::web::http {
 		std::unordered_map<std::string, std::string> headers;
 	};
 
+	using UrlQueryT = HttpHeaders;
+
 	template<Formattable T>
 	void HttpHeaders::add(const std::string& key, const T& val) {
 		headers[key] = std::format("{}", val);
@@ -107,11 +109,13 @@ namespace util::web::http {
 		HttpRequest();
 		HttpRequest(Method method, const std::string& url, const std::string& version, const std::unordered_map<std::string, std::string>& headers = {}, const std::string& body = "");
 		std::string encode() const;
+		UrlQueryT makeUrlQuery() const;
 		Method method = Method::GET;
 		std::string url;
 		std::string version;
 		HttpHeaders headers;
 		std::string body;
+		UrlQueryT query;
 	};
 
 	struct HttpResponse {
