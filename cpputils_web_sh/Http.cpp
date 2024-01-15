@@ -119,11 +119,14 @@ void HttpHeaders::remove(const std::string& key) {
 }
 
 void HttpHeaders::borrow(const HttpHeaders& other, const std::string& key, const std::string& defVal, const std::string& newKey) {
-	if (auto iter = other.headers.find(key); iter != other.headers.end()) {
-		add(newKey.empty() ? key : newKey, iter->second);
-	}
-	else {
-		if (!defVal.empty()) add(newKey.empty() ? key : newKey, defVal);
+	// borrow only if not already set
+	if (auto iterThis = headers.find(key); iterThis == headers.end()) {
+		if (auto iter = other.headers.find(key); iter != other.headers.end()) {
+			add(newKey.empty() ? key : newKey, iter->second);
+		}
+		else {
+			if (!defVal.empty()) add(newKey.empty() ? key : newKey, defVal);
+		}
 	}
 }
 
